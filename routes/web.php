@@ -60,3 +60,7 @@ Route::get('/admin/dashboard', function () {
 Route::get('/admin/program/create', function () {
     return view('/admin/programs/create');
 });
+
+Route::get('/admin/students/index', function () {
+    return view('/admin/programs/create');
+});
