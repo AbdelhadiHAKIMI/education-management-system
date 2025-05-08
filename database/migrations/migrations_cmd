@@ -1,30 +1,31 @@
-php artisan migrate --path=database/migrations/0001_01_01_000002_create_jobs_table.php
-php artisan migrate --path=database/migrations/0001_01_01_000001_create_cache_table.php
-php artisan migrate --path=database/migrations/2025_05_06_113019_create_establishments_table.php
-php artisan migrate --path=database/migrations/0001_01_01_000000_create_users_table.php
-php artisan migrate --path=database/migrations 2025_05_06_113324_add_created_by_to_establishments_table.php
-php artisan migrate --path=database/migrations/2025_05_06_113554_create_academic_years_table.php
-php artisan migrate --path=database/migrations/2025_05_06_113502_create_staff_table.php
-php artisan migrate --path=database/migrations/2025_05_06_113735_create_levels_table.php
-php artisan migrate --path=database/migrations/2025_05_06_123739_create_branches_table.php
-php artisan migrate --path=database/migrations/2025_05_06_123822_create_subjects_table.php
-php artisan migrate --path=database/migrations/2025_05_06_123913_create_students_table.php
-php artisan migrate --path=database/migrations/2025_05_06_123948_create_student_academic_years_table.php
-php artisan migrate --path=database/migrations/2025_05_06_124021_create_programs_table.php
-php artisan migrate --path=database/migrations/2025_05_06_124121_create_program_staff_table.php
-php artisan migrate --path=database/migrations/2025_05_06_124149_create_staff_attendance_table.php
-php artisan migrate --path=database/migrations/2025_05_06_124224_create_exam_sessions_table.php
-php artisan migrate --path=database/migrations/2025_05_06_124504_create_exam_results_table.php
-php artisan migrate --path=database/migrations/2025_05_06_124531_create_subject_grades_table.php
-php artisan migrate --path=database/migrations/2025_05_06_124608_create_teacher_subjects_table.php
-php artisan migrate --path=database/migrations/2025_05_06_124642_create_generated_files_table.php
-php artisan migrate --path=database/migrations/2025_05_06_155156_create_program_expenses_table.php
-php artisan migrate --path=database/migrations/2025_05_06_160544_create_staff_salaries_table.php
-php artisan migrate --path=database/migrations/2025_05_06_161141_create_responsibilities_table.php
-php artisan migrate --path=database/migrations/2025_05_06_160919_create_staff_responsibilities_table.php
-php artisan migrate --path=database/migrations/2025_05_06_165225_create_program_invitations_table.php
-php artisan migrate --path=database/migrations/2025_05_06_163605_create_student_payments_table.php
-php artisan migrate --path=database/migrations/2025_05_06_163714_create_daily_attendance_table.php
-php artisan migrate --path=database/migrations/2025_05_06_165404_create_staff_special_grants_table.php
-php artisan migrate --path=database/migrations/2025_05_06_165757_create_staff_seniority_table.php
-php artisan migrate --path=database/migrations/2025_05_06_170012_create_staff_performance_grants_table.php
+/0001_01_01_000002_create_jobs_table.php
+/0001_01_01_000001_create_cache_table.php
+/2025_05_06_113019_create_establishments_table.php
+/0001_01_01_000000_create_users_table.php
+ 2025_05_06_113324_add_created_by_to_establishments_table.php
+/2025_05_06_113554_create_academic_years_table.php
+/2025_05_06_113502_create_staff_table.php
+/2025_05_06_113735_create_levels_table.php
+/2025_05_06_123739_create_branches_table.php
+10_add_branch_id_to_staff_table
+/2025_05_06_123822_create_subjects_table.php
+/2025_05_06_123913_create_students_table.php
+/2025_05_06_123948_create_student_academic_years_table.php
+/2025_05_06_124021_create_programs_table.php
+/2025_05_06_124121_create_program_staff_table.php
+/2025_05_06_124149_create_staff_attendance_table.php
+/2025_05_06_124224_create_exam_sessions_table.php
+/2025_05_06_124504_create_exam_results_table.php
+/2025_05_06_124531_create_subject_grades_table.php
+/2025_05_06_124608_create_teacher_subjects_table.php
+/2025_05_06_124642_create_generated_files_table.php
+/2025_05_06_155156_create_program_expenses_table.php
+/2025_05_06_160544_create_staff_salaries_table.php
+/2025_05_06_161141_create_responsibilities_table.php
+/2025_05_06_160919_create_staff_responsibilities_table.php
+/2025_05_06_165225_create_program_invitations_table.php
+/2025_05_06_163605_create_student_payments_table.php
+/2025_05_06_163714_create_daily_attendance_table.php
+/2025_05_06_165404_create_staff_special_grants_table.php
+/2025_05_06_165757_create_staff_seniority_table.php
+/2025_05_06_170012_create_staff_performance_grants_table.php
