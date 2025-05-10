@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل الدخول - نظام الإدارة التعليمية</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
         body {
@@ -30,14 +30,29 @@
         </div>
         
         <!-- Form -->
-        <form class="space-y-6 p-8">
+        <form class="space-y-6 p-8" method="POST" action="{{ route('login') }}">
+            @csrf
+            
+            <!-- Error Messages -->
+            @if($errors->any())
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+            
             <div>
-                <label for="email" class="block mb-2 text-gray-700">البريد الإلكتروني أو اسم المستخدم</label>
+                <label for="email" class="block mb-2 text-gray-700">البريد الإلكتروني</label>
                 <div class="relative">
                     <div class="right-0 absolute inset-y-0 flex items-center pr-3 text-gray-500 pointer-events-none">
                         <i class="fas fa-user"></i>
                     </div>
-                    <input type="text" id="email" class="py-3 pr-10 pl-4 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full" placeholder="ادخل بريدك الإلكتروني">
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" required autofocus
+                        class="py-3 pr-10 pl-4 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full" 
+                        placeholder="ادخل بريدك الإلكتروني">
                 </div>
             </div>
             
@@ -47,16 +62,20 @@
                     <div class="right-0 absolute inset-y-0 flex items-center pr-3 text-gray-500 pointer-events-none">
                         <i class="fas fa-lock"></i>
                     </div>
-                    <input type="password" id="password" class="py-3 pr-10 pl-4 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full" placeholder="ادخل كلمة المرور">
+                    <input type="password" id="password" name="password" required
+                        class="py-3 pr-10 pl-4 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full" 
+                        placeholder="ادخل كلمة المرور">
                 </div>
             </div>
             
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
-                    <input id="remember" type="checkbox" class="border-gray-300 rounded focus:ring-blue-500 w-4 h-4 text-blue-600">
+                    <input id="remember" name="remember" type="checkbox" class="border-gray-300 rounded focus:ring-blue-500 w-4 h-4 text-blue-600">
                     <label for="remember" class="block mr-2 text-gray-700 text-sm">تذكرني</label>
                 </div>
-                <a href="#" class="text-blue-600 text-sm hover:underline">نسيت كلمة المرور؟</a>
+                @if (Route::has('password.request'))
+                    <a href="{{ route('password.request') }}" class="text-blue-600 text-sm hover:underline">نسيت كلمة المرور؟</a>
+                @endif
             </div>
             
             <button type="submit" class="flex justify-center items-center space-x-2 space-x-reverse bg-blue-700 hover:bg-blue-800 px-4 py-3 rounded-lg w-full font-medium text-white transition duration-200">
