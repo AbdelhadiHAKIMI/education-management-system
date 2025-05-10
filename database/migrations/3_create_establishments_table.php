@@ -15,7 +15,6 @@ return new class extends Migration
          $table->string('logo')->nullable();
          $table->string('registration_code', 50)->unique();
          $table->boolean('is_active')->default(true);
-         $table->string('created_by', 50);
          $table->timestamps();
       });
    }
