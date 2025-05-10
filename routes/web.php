@@ -1,23 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
 // Authentication Routes
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register');
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
 
-Route::get('/forgot-password', function () {
-    return view('auth.forgot-password');
-})->name('password.request');
+Route::get('/forgot-password', function () {return view('auth.forgot-password');})->name('password.request');
 
-Route::get('/reset-password/{token}', function ($token) {
-    return view('auth.reset-password', ['token' => $token]);
-})->name('password.reset');
+Route::get('/reset-password/{token}', function ($token) {return view('auth.reset-password', ['token' => $token]);})->name('password.reset');
 
 // Webmaster Routes
 Route::prefix('webmaster')->group(function () {
@@ -58,9 +53,5 @@ Route::get('/admin/dashboard', function () {
 });
 
 Route::get('/admin/program/create', function () {
-    return view('/admin/programs/create');
-});
-
-Route::get('/admin/students/index', function () {
     return view('/admin/programs/create');
 });
