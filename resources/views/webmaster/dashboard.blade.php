@@ -28,7 +28,7 @@
                     <span class="-top-2 -right-2 absolute flex justify-center items-center bg-red-500 rounded-full w-5 h-5 text-white text-xs">3</span>
                 </a>
                 <div class="flex items-center space-x-2 space-x-reverse">
-                    <img src="https://ui-avatars.com/api/?name=مدير+النظام&background=random" 
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" 
                          class="rounded-full w-8 h-8" 
                          alt="صورة المستخدم">
                     <span>مدير النظام</span>
@@ -44,12 +44,12 @@
         <aside class="top-0 sticky bg-white shadow-md w-64 h-screen">
             <div class="p-4 border-gray-200 border-b">
                 <div class="flex items-center space-x-3 space-x-reverse">
-                    <img src="https://ui-avatars.com/api/?name=مدير+النظام&background=random" 
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" 
                          class="rounded-full w-10 h-10" 
                          alt="صورة المستخدم">
                     <div>
                         <p class="font-medium">مدير النظام</p>
-                        <p class="text-gray-500 text-xs">WebMaster</p>
+                        <p class="text-gray-500 text-xs">{{ Auth::user()->name }}</p>
                     </div>
                 </div>
             </div>
@@ -90,10 +90,13 @@
                 </ul>
                 
                 <div class="mt-8 pt-4 border-gray-200 border-t">
-                    <a href="#" class="flex items-center space-x-2 space-x-reverse hover:bg-red-50 p-3 rounded-lg text-red-600">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>تسجيل الخروج</span>
-                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="flex items-center space-x-2 space-x-reverse hover:bg-red-50 p-3 rounded-lg w-full text-red-600">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>تسجيل الخروج</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </aside>
@@ -105,7 +108,7 @@
                     <h1 class="font-bold text-gray-800 text-2xl">إدارة المؤسسات التعليمية</h1>
                     <p class="text-gray-600">قائمة بجميع المؤسسات المسجلة في النظام</p>
                 </div>
-                <a href="#" class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
+                <a href="{{ route('webmaster.establishments.create') }}" class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
                     <i class="fas fa-plus"></i>
                     <span>إضافة مؤسسة جديدة</span>
                 </a>
@@ -117,7 +120,7 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <p class="text-gray-500">المؤسسات النشطة</p>
-                            <h3 class="font-bold text-2xl">12</h3>
+                            <h3 class="font-bold text-2xl">{{ \App\Models\Establishment::where('is_active', '1')->count() }}</h3>
                         </div>
                         <div class="bg-blue-100 p-3 rounded-full">
                             <i class="text-blue-600 text-xl fas fa-school"></i>
@@ -129,7 +132,7 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <p class="text-gray-500">المؤسسات المعلقة</p>
-                            <h3 class="font-bold text-2xl">3</h3>
+                            <h3 class="font-bold text-2xl">{{ \App\Models\Establishment::where('is_active', '0')->count() }}</h3>
                         </div>
                         <div class="bg-green-100 p-3 rounded-full">
                             <i class="text-green-600 text-xl fas fa-pause-circle"></i>
