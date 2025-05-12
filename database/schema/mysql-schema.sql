@@ -297,6 +297,7 @@ CREATE TABLE `programs` (
   `registration_fees` decimal(10,2) NOT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_by_id` bigint(20) unsigned NOT NULL,
+  `level_id` bigint(20) unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -304,6 +305,7 @@ CREATE TABLE `programs` (
   KEY `programs_created_by_id_foreign` (`created_by_id`),
   CONSTRAINT `programs_academic_year_id_foreign` FOREIGN KEY (`academic_year_id`) REFERENCES `academic_years` (`id`),
   CONSTRAINT `programs_created_by_id_foreign` FOREIGN KEY (`created_by_id`) REFERENCES `users` (`id`)
+  CONSTRAINT `programs_level_id_foreign` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `responsibilities`;

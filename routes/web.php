@@ -19,7 +19,7 @@ Route::prefix('webmaster')->group(function () {
     Route::get('/dashboard', function () {
         return view('webmaster.dashboard');
     })->name('webmaster.dashboard');
-    
+     
     Route::prefix('establishments')->group(function () {
         Route::get('/', function () {
             return view('webmaster.establishments.index');
