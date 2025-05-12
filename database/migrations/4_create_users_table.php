@@ -8,7 +8,7 @@ return new class extends Migration
 {
    /**
     * Run the migrations.
-    */ 
+    */
    public function up(): void
    {
       Schema::create('users', function (Blueprint $table) {
@@ -19,7 +19,7 @@ return new class extends Migration
          $table->string('password');
          $table->rememberToken();
          $table->enum('role', ['webmaster', 'super_admin', 'admin', 'teacher'])->default('teacher');
-         $table->foreignId('establishment_id')->nullable()->constrained('establishments');
+         $table->foreignId('establishment_id')->nullable();
          $table->boolean('is_active')->default(true);
          $table->timestamps();
       });
