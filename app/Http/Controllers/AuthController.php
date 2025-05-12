@@ -29,7 +29,7 @@ class AuthController extends Controller
                 case 'webmaster':
                     return redirect()->intended('webmaster/dashboard');
                 case 'super_admin':
-                    return redirect()->intended('super_admin/dashboard');
+                    return redirect()->intended('admin/dashboard');
                 case 'admin':
                     return redirect()->intended('admin/dashboard');
                 case 'teacher':

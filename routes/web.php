@@ -27,6 +27,7 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
     })->name('webmaster.dashboard');
 
     // Establishments Routes
+
     Route::prefix('establishments')->group(function () {
         Route::get('/', [EstablishmentController::class, 'index'])
             ->name('webmaster.establishments.index');
