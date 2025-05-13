@@ -2,40 +2,55 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EstablishmentController;
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::get('/forgot-password', function () {return view('auth.forgot-password');})->name('password.request');
+Route::get('/forgot-password', function () {
+    return view('auth.forgot-password');
+})->name('password.request');
 
-Route::get('/reset-password/{token}', function ($token) {return view('auth.reset-password', ['token' => $token]);})->name('password.reset');
+Route::get('/reset-password/{token}', function ($token) {
+    return view('auth.reset-password', ['token' => $token]);
+})->name('password.reset');
 
 // Webmaster Routes
-Route::prefix('webmaster')->group(function () {
+Route::prefix('webmaster')->middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return view('webmaster.dashboard');
     })->name('webmaster.dashboard');
-    
+
+    // Establishments Routes
+
     Route::prefix('establishments')->group(function () {
-        Route::get('/', function () {
-            return view('webmaster.establishments.index');
-        })->name('webmaster.establishments.index');
-        
+        Route::get('/', [EstablishmentController::class, 'index'])
+            ->name('webmaster.establishments.index');
+
         Route::get('/create', function () {
             return view('webmaster.establishments.create');
         })->name('webmaster.establishments.create');
-        
-        Route::get('/{id}', function ($id) {
-            return view('webmaster.establishments.show', ['id' => $id]);
-        })->name('webmaster.establishments.show');
-        
+
+        Route::post('/store', [EstablishmentController::class, 'store'])
+            ->name('webmaster.establishments.store');
+
         Route::get('/{id}/edit', function ($id) {
             return view('webmaster.establishments.edit', ['id' => $id]);
         })->name('webmaster.establishments.edit');
+
+        Route::get('/{establishment}', [EstablishmentController::class, 'show'])
+            ->name('webmaster.establishments.show');
+
+        Route::put('/{establishment}', [EstablishmentController::class, 'update'])
+            ->name('webmaster.establishments.update');
+
+        Route::delete('/{establishment}', [EstablishmentController::class, 'destroy'])
+            ->name('webmaster.establishments.destroy');
     });
 });
 
@@ -58,3 +73,4 @@ Route::get('/admin/programs/create', function () {
 Route::get('/admin/programs/index', function () {
     return view('/admin/programs/index');
 });
+

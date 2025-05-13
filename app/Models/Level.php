@@ -2,20 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
 
 class Level extends Model
 {
+   // Allow mass assignment for these fields
+   protected $fillable = [
+      'name',
+      'academic_year_id',
+   ];
 
-    protected $fillable = [
-        'name',
-        'academic_year_id',
-    ];
-
-    public function academicYear()
-    {
-        return $this->belongsTo(AcademicYear::class);
-    }
+   // Relationship: Level belongs to AcademicYear
+   public function academicYear()
+   {
+      return $this->belongsTo(AcademicYear::class);
+   }
 }
+

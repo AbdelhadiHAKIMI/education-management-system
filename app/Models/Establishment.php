@@ -2,24 +2,31 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Establishment extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'name',
         'location',
+        'wilaya',
+        'phone',
+        'email',
         'logo',
         'registration_code',
         'is_active',
+        'created_by'
     ];
 
-    // Relationships
-    public function academicYears()
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public $timestamps = false;
+
+    public function creator()
     {
-        return $this->hasMany(AcademicYear::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
 }
+
