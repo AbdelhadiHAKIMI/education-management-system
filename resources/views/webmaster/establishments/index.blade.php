@@ -1,92 +1,127 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
 
-@section('header')
-<h2 class="font-semibold text-gray-800 text-xl leading-tight">
-    إدارة المؤسسات التعليمية
-</h2>
-@endsection
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض المؤسسة - نظام الإدارة التعليمية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
 
-@section('content')
-<div class="py-12">
-    <div class="mx-auto sm:px-6 lg:px-8 max-w-7xl">
-        <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
-            <div class="bg-white p-6 border-gray-200 border-b">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-medium text-lg">قائمة المؤسسات</h3>
-                    <a href="{{ route('webmaster.establishments.create') }}" class="flex items-center bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md text-white">
-                        <i class="ml-2 fas fa-plus"></i>
-                        إضافة مؤسسة جديدة
-                    </a>
+        body {
+            font-family: 'Tajawal', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Navigation (Same as WebMaster Dashboard) -->
+
+    <!-- Main Content -->
+    <div class="flex">
+        <!-- Sidebar (Same as WebMaster Dashboard) -->
+
+        <!-- Content Area -->
+        <main class="flex-1 p-8">
+            @if(isset($establishment))
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="font-bold text-gray-800 text-2xl">{{ $establishment->name }}</h1>
+                    <p class="text-gray-600">تفاصيل المؤسسة التعليمية</p>
                 </div>
-                
-                <div class="bg-white shadow rounded-lg overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="px-4 py-3 font-semibold text-gray-700 text-right">#</th>
-                                    <th class="px-4 py-3 font-semibold text-gray-700 text-right">المؤسسة</th>
-                                    <th class="px-4 py-3 font-semibold text-gray-700 text-right">المدير</th>
-                                    <th class="px-4 py-3 font-semibold text-gray-700 text-right">الطلاب</th>
-                                    <th class="px-4 py-3 font-semibold text-gray-700 text-right">الحالة</th>
-                                    <th class="px-4 py-3 font-semibold text-gray-700 text-right">الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-3">1</td>
-                                    <td class="px-4 py-3 font-medium">
-                                        <div class="flex items-center space-x-3 space-x-reverse">
-                                            <div class="bg-blue-100 p-2 rounded-full">
-                                                <i class="text-blue-600 fas fa-school"></i>
-                                            </div>
-                                            <div>
-                                                <p class="font-semibold">ثانوية الإخوة عمور</p>
-                                                <p class="text-gray-500 text-sm">البليدة</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-3">عبد القادر بن عمر</td>
-                                    <td class="px-4 py-3">324</td>
-                                    <td class="px-4 py-3">
-                                        <span class="bg-green-100 px-3 py-1 rounded-full text-green-800 text-sm">نشطة</span>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex space-x-2 space-x-reverse">
-                                            <a href="{{ route('webmaster.establishments.show', 1) }}" class="hover:bg-blue-50 p-2 rounded-full text-blue-600 hover:text-blue-800" title="عرض">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{{ route('webmaster.establishments.edit', 1) }}" class="hover:bg-yellow-50 p-2 rounded-full text-yellow-600 hover:text-yellow-800" title="تعديل">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <button class="hover:bg-red-50 p-2 rounded-full text-red-600 hover:text-red-800" title="حذف">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="flex justify-between items-center px-4 py-3 border-gray-200 border-t">
-                        <div class="flex flex-1 justify-between items-center">
-                            <button class="inline-flex relative items-center bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 text-sm">
-                                السابق
-                            </button>
-                            <div class="hidden md:flex space-x-1 space-x-reverse">
-                                <button class="bg-blue-600 px-3 py-1 rounded-md text-white">1</button>
-                                <button class="hover:bg-gray-100 px-3 py-1 rounded-md">2</button>
-                                <button class="hover:bg-gray-100 px-3 py-1 rounded-md">3</button>
+                <a href="{{ route('webmaster.dashboard') }}" class="flex items-center space-x-2 space-x-reverse bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg text-gray-800">
+                    <i class="fa-arrow-right fas"></i>
+                    <span>رجوع</span>
+                </a>
+            </div>
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <div class="p-6">
+                    <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
+                        <div>
+                            <h3 class="mb-4 pb-2 border-gray-200 border-b font-semibold text-gray-800 text-lg">معلومات المؤسسة</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-gray-500">الاسم</p>
+                                    <p class="font-medium">{{ $establishment->name }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">العنوان</p>
+                                    <p class="font-medium">{{ $establishment->location }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">رمز التسجيل</p>
+                                    <p class="font-medium">{{ $establishment->registration_code }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">الشعار</p>
+                                    @if($establishment->logo)
+                                    <img src="{{ asset('storage/' . $establishment->logo) }}" alt="شعار المؤسسة" class="mt-2 border rounded-full w-24 h-24">
+                                    @else
+                                    <span class="text-gray-400">لا يوجد شعار</span>
+                                    @endif
+                                </div>
                             </div>
-                            <button class="inline-flex relative items-center bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 text-sm">
-                                التالي
-                            </button>
                         </div>
+                        <div>
+                            <h3 class="mb-4 pb-2 border-gray-200 border-b font-semibold text-gray-800 text-lg">معلومات الاتصال</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-gray-500">الولاية</p>
+                                    <p class="font-medium">{{ $establishment->wilaya ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">رقم الهاتف</p>
+                                    <p class="font-medium">{{ $establishment->phone ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">البريد الإلكتروني</p>
+                                    <p class="font-medium">{{ $establishment->email ?? '-' }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500">الحالة</p>
+                                    <p class="font-medium">
+                                        @if($establishment->is_active)
+                                        <span class="bg-green-100 px-2 py-1 rounded-full text-green-800 text-sm">نشطة</span>
+                                        @else
+                                        <span class="bg-red-100 px-2 py-1 rounded-full text-red-800 text-sm">معلقة</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <h3 class="mb-4 pb-2 border-gray-200 border-b font-semibold text-gray-800 text-lg">مدير المؤسسة</h3>
+                            <div class="flex items-center space-x-4 space-x-reverse bg-gray-50 p-4 rounded-lg">
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode($establishment->manager->name ?? '-') }}&background=random"
+                                    class="rounded-full w-16 h-16"
+                                    alt="صورة المدير">
+                                <div>
+                                    <p class="font-bold">{{ $establishment->manager->name ?? '-' }}</p>
+                                    <p class="text-gray-600">مدير المؤسسة</p>
+                                    <p class="mt-1 text-gray-500 text-sm"><i class="mr-1 fas fa-phone"></i> {{ $establishment->manager->phone ?? '-' }}</p>
+                                    <p class="text-gray-500 text-sm"><i class="mr-1 fas fa-envelope"></i> {{ $establishment->manager->email ?? '-' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 space-x-reverse mt-8 pt-6 border-gray-200 border-t">
+                        <a href="{{ route('webmaster.dashboard') }}" class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-lg text-gray-800">
+                            رجوع
+                        </a>
+                        <a href="{{ route('webmaster.establishments.edit', $establishment->id) }}" class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg text-white">
+                            <i class="fas fa-edit"></i>
+                            <span>تعديل</span>
+                        </a>
                     </div>
                 </div>
             </div>
-        </div>
+            @else
+            {{-- ...existing code for the list of establishments... --}}
+            @endif
+        </main>
     </div>
-</div>
-@endsection
+</body>
+
+</html>
