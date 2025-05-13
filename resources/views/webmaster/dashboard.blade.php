@@ -105,7 +105,7 @@
                     <h1 class="font-bold text-gray-800 text-2xl">إدارة المؤسسات التعليمية</h1>
                     <p class="text-gray-600">قائمة بجميع المؤسسات المسجلة في النظام</p>
                 </div>
-                <a href="#" class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
+                <a href="{{ route('webmaster.establishments.create') }}" class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
                     <i class="fas fa-plus"></i>
                     <span>إضافة مؤسسة جديدة</span>
                 </a>

@@ -52,6 +52,9 @@ Route::get('/admin/dashboard', function () {
     return view('/admin/dashboard');
 });
 
-Route::get('/admin/program/create', function () {
+Route::get('/admin/programs/create', function () {
     return view('/admin/programs/create');
+});
+Route::get('/admin/programs/index', function () {
+    return view('/admin/programs/index');
 });
