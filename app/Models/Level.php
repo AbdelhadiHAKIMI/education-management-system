@@ -18,3 +18,4 @@ class Level extends Model
       return $this->belongsTo(AcademicYear::class);
    }
 }
+

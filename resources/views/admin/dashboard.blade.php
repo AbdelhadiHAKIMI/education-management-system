@@ -23,6 +23,28 @@
             </div>
             
             <div class="flex items-center space-x-6 space-x-reverse">
+                <div class="group relative">
+                    <button class="flex items-center space-x-2 space-x-reverse bg-blue-700 px-3 py-1 rounded-lg">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>2023/2024</span>
+                        <i class="text-xs fas fa-chevron-down"></i>
+                    </button>
+                    <div class="hidden group-hover:block right-0 z-10 absolute bg-white shadow-lg mt-2 rounded-md w-48">
+                        <div class="py-1">
+                            <div class="bg-gray-100 px-4 py-2 font-semibold text-dark">السنوات الدراسية</div>
+                            <a href="#" class="block hover:bg-gray-100 px-4 py-2 text-dark">
+                                <span class="font-medium">2023/2024</span>
+                                <span class="bg-green-100 mr-2 px-2 py-1 rounded-full text-green-800 text-xs">نشطة</span>
+                            </a>
+                            <a href="#" class="block hover:bg-gray-100 px-4 py-2 text-dark">2022/2023</a>
+                            <a href="#" class="block hover:bg-gray-100 px-4 py-2 text-dark">2021/2022</a>
+                            <div class="border-gray-200 border-t"></div>
+                            <a href="#" class="block hover:bg-gray-100 px-4 py-2 text-primary">
+                                <i class="mr-2 fas fa-plus"></i> سنة جديدة
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 <a href="#" class="relative hover:text-blue-200">
                     <i class="fas fa-bell"></i>
                     <span class="-top-2 -right-2 absolute flex justify-center items-center bg-red-500 rounded-full w-5 h-5 text-white text-xs">5</span>
@@ -83,7 +105,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
+                        <a href="/admin/programs/index" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
                             <i class="fas fa-calendar-alt"></i>
                             <span>البرامج التعليمية</span>
                         </a>
@@ -132,8 +154,10 @@
                         <span>تصدير البيانات</span>
                     </button>
                     <button class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
-                        <i class="fas fa-plus"></i>
-                        <span>برنامج جديد</span>
+                        <a href="/admin/programs/create">
+                            <i class="fas fa-plus"></i>
+                            <span>برنامج جديد</span>
+                        </a>
                     </button>
                 </div>
             </div>
@@ -159,7 +183,7 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <p class="text-gray-500">البرامج النشطة</p>
-                            <h3 class="font-bold text-2xl">6</h3>
+                            <h3 class="font-bold text-2xl">{{ \App\Models\Program::where('is_active', true)->count() }}</h3>
                         </div>
                         <div class="bg-green-100 p-3 rounded-full">
                             <i class="text-green-600 fas fa-calendar-check"></i>
@@ -202,51 +226,47 @@
             </div>
             
             <!-- Programs Section -->
-            <div class="bg-white shadow-md mb-8 p-6 rounded-lg">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="font-semibold text-gray-800 text-xl">أحدث البرامج التعليمية</h2>
-                    <a href="#" class="text-blue-600 hover:underline">عرض الكل</a>
-                </div>
-                
-                <div class="gap-6 grid grid-cols-1 md:grid-cols-3">
-                    <!-- Program Card -->
-                    <div class="hover:shadow-lg border border-gray-200 rounded-lg overflow-hidden transition duration-200">
-                        <div class="bg-blue-600 p-4 text-white">
-                            <div class="flex justify-between items-center">
-                                <h3 class="font-bold text-lg">برنامج الرياضيات المكثف</h3>
-                                <span class="bg-blue-700 px-2 py-1 rounded-full text-xs">نشط</span>
+            @php
+                use App\Models\Program;
+                $programs = Program::all();
+            @endphp
+            @forelse($programs as $program)
+            <div class="bg-white shadow-md mb-8 p-6 border-accent border-r-4 rounded-lg">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="font-semibold text-dark text-xl">{{ $program->name ?? 'اسم البرنامج غير متوفر' }}</h2>
+                        <p class="mt-1 text-gray-600">2023/2024 - الفصل الثاني</p>
+                        <div class="flex items-center space-x-4 space-x-reverse mt-3">
+                            <div>
+                                <span class="text-gray-500 text-sm">تاريخ البدء</span>
+                                <p class="font-medium">{{ \Carbon\Carbon::parse($program->start_date ?? '2023-09-05')->translatedFormat('d F Y') }}</p>
                             </div>
-                            <p class="mt-1 text-blue-100 text-sm">من 15/09/2023 إلى 15/12/2023</p>
-                        </div>
-                        <div class="p-4">
-                            <div class="flex justify-between items-center mb-3">
-                                <div>
-                                    <p class="text-gray-500 text-sm">الطلاب</p>
-                                    <p class="font-medium">45</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500 text-sm">الأساتذة</p>
-                                    <p class="font-medium">3</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500 text-sm">المبلغ</p>
-                                    <p class="font-medium">30,000 د.ج</p>
-                                </div>
+                            <div>
+                                <span class="text-gray-500 text-sm">تاريخ الانتهاء</span>
+                                <p class="font-medium">{{ \Carbon\Carbon::parse($program->end_date ?? '2024-05-30')->translatedFormat('d F Y') }}</p>
                             </div>
-                            <div class="flex space-x-2 space-x-reverse pt-3 border-gray-200 border-t">
-                                <a href="#" class="flex-1 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded text-blue-600 text-sm text-center">
-                                    <i class="mr-1 fas fa-eye"></i> عرض
-                                </a>
-                                <a href="#" class="flex-1 bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded text-gray-600 text-sm text-center">
-                                    <i class="mr-1 fas fa-edit"></i> تعديل
-                                </a>
+                            <div>
+                                <span class="text-gray-500 text-sm">الحالة</span>
+                                @if($program->is_active ?? true)
+                                    <p class="font-medium text-green-600">جارية</p>
+                                @else
+                                    <p class="font-medium text-red-600">منتهية</p>
+                                @endif
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- More program cards... -->
+                    <div class="flex space-x-3 space-x-reverse">
+                        <button class="flex items-center bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
+                            <i class="mr-2 fas fa-archive"></i> أرشفة السنة
+                        </button>
+                    </div>
                 </div>
             </div>
+            @empty
+                <tr>
+                    <td colspan="5" class="px-4 py-4 text-center text-gray-500">لا توجد برامج متاحة حالياً.</td>
+                </tr>
+            @endforelse
             
             <!-- Recent Activities -->
             <div class="bg-white shadow-md p-6 rounded-lg">

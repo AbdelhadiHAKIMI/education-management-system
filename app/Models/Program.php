@@ -1,5 +1,4 @@
 <?php
-namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -14,29 +13,12 @@ class Program extends Model
     {
         return $this->belongsTo(AcademicYear::class);
     }
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
 
     public function level()
     {
         return $this->belongsTo(Level::class);
-    }
-
-    public function staff()
-    {
-        return $this->hasMany(ProgramStaff::class);
-    }
-
-    public function expenses()
-    {
-        return $this->hasMany(ProgramExpense::class);
-    }
-
-    public function invitations()
-    {
-        return $this->hasMany(ProgramInvitation::class);
-    }
-
-    public function generatedFiles()
-    {
-        return $this->hasMany(GeneratedFile::class);
     }
 }
