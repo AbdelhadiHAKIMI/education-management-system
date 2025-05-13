@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EstablishmentController;
+use App\Http\Controllers\DashboardController;
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -22,12 +23,9 @@ Route::get('/reset-password/{token}', function ($token) {
 
 // Webmaster Routes
 Route::prefix('webmaster')->middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('webmaster.dashboard');
-    })->name('webmaster.dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('webmaster.dashboard');
 
     // Establishments Routes
-
     Route::prefix('establishments')->group(function () {
         Route::get('/', [EstablishmentController::class, 'index'])
             ->name('webmaster.establishments.index');
@@ -39,9 +37,8 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
         Route::post('/store', [EstablishmentController::class, 'store'])
             ->name('webmaster.establishments.store');
 
-        Route::get('/{id}/edit', function ($id) {
-            return view('webmaster.establishments.edit', ['id' => $id]);
-        })->name('webmaster.establishments.edit');
+        Route::get('/{establishment}/edit', [EstablishmentController::class, 'edit'])
+            ->name('webmaster.establishments.edit');
 
         Route::get('/{establishment}', [EstablishmentController::class, 'show'])
             ->name('webmaster.establishments.show');
@@ -51,6 +48,9 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
 
         Route::delete('/{establishment}', [EstablishmentController::class, 'destroy'])
             ->name('webmaster.establishments.destroy');
+
+        Route::delete('/remove-admin/{user}', [EstablishmentController::class, 'removeAdmin'])
+            ->name('webmaster.establishments.removeAdmin');
     });
 });
 
@@ -73,4 +73,3 @@ Route::get('/admin/programs/create', function () {
 Route::get('/admin/programs/index', function () {
     return view('/admin/programs/index');
 });
-
