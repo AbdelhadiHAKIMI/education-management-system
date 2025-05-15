@@ -2,8 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\EstablishmentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CsvProcessorController;
+use App\Http\Controllers\EstablishmentController;
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -73,3 +74,12 @@ Route::get('/admin/programs/create', function () {
 Route::get('/admin/programs/index', function () {
     return view('/admin/programs/index');
 });
+
+Route::get('/csv-processor', [CsvProcessorController::class, 'index'])->name('csv.processor');
+Route::post('/csv-processor/upload', [CsvProcessorController::class, 'upload'])->name('csv.upload');
+Route::post('/csv-processor/filter', [CsvProcessorController::class, 'filter'])->name('csv.filter');
+Route::post('/csv-processor/generate', [CsvProcessorController::class, 'generate'])->name('csv.generate');
+Route::get('/csv-processor/download', [CsvProcessorController::class, 'download'])->name('csv.download');
+Route::get('/csv-processor/show', [CsvProcessorController::class, 'show'])->name('csv.show');
+Route::get('/csv-processor/prototype', [CsvProcessorController::class, 'prototype'])->name('csv.prototype');
+Route::get('/csv-processor/prototype-xlsx', [CsvProcessorController::class, 'prototypeXlsx'])->name('csv.prototype.xlsx');
