@@ -12,7 +12,7 @@ return new class extends Migration
         $table->foreignId('level_id')
               ->nullable()
               ->after('academic_year_id')
-              ->constrained('levels')
+              ->constrained('levels') 
               ->nullOnDelete();
     });
     }
