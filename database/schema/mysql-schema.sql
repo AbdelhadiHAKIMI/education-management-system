@@ -84,6 +84,9 @@ CREATE TABLE `establishments` (
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `updated_at` timestamp NULL DEFAULT NULL,
   `created_by` bigint(20) unsigned NOT NULL,
+  `wilaya` varchar(50) DEFAULT NULL,
+  `phone` varchar(30) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `establishments_registration_code_unique` (`registration_code`),
   KEY `establishments_created_by_foreign` (`created_by`),
@@ -294,17 +297,18 @@ CREATE TABLE `programs` (
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
   `academic_year_id` bigint(20) unsigned NOT NULL,
+  `level_id` bigint(20) unsigned DEFAULT NULL,
   `registration_fees` decimal(10,2) NOT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_by_id` bigint(20) unsigned NOT NULL,
-  `level_id` bigint(20) unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `programs_academic_year_id_foreign` (`academic_year_id`),
   KEY `programs_created_by_id_foreign` (`created_by_id`),
+  KEY `programs_level_id_foreign` (`level_id`),
   CONSTRAINT `programs_academic_year_id_foreign` FOREIGN KEY (`academic_year_id`) REFERENCES `academic_years` (`id`),
-  CONSTRAINT `programs_created_by_id_foreign` FOREIGN KEY (`created_by_id`) REFERENCES `users` (`id`)
+  CONSTRAINT `programs_created_by_id_foreign` FOREIGN KEY (`created_by_id`) REFERENCES `users` (`id`),
   CONSTRAINT `programs_level_id_foreign` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -344,17 +348,18 @@ CREATE TABLE `staff` (
   `birth_date` date NOT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `bac_year` int(11) DEFAULT NULL,
-  `branch_id` bigint(20) unsigned DEFAULT NULL,
-  `quran_level` enum('مستظهر','خاتم') DEFAULT NULL,
   `univ_specialty` varchar(50) DEFAULT NULL,
+  `branch_id` bigint(20) unsigned NOT NULL,
   `academic_year_id` bigint(20) unsigned NOT NULL,
   `establishment_id` bigint(20) unsigned NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
+  KEY `staff_branch_id_foreign` (`branch_id`),
   KEY `staff_academic_year_id_foreign` (`academic_year_id`),
   KEY `staff_establishment_id_foreign` (`establishment_id`),
-  KEY `staff_branch_id_foreign` (`branch_id`),
   CONSTRAINT `staff_academic_year_id_foreign` FOREIGN KEY (`academic_year_id`) REFERENCES `academic_years` (`id`),
-  CONSTRAINT `staff_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `staff_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`),
   CONSTRAINT `staff_establishment_id_foreign` FOREIGN KEY (`establishment_id`) REFERENCES `establishments` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -572,13 +577,16 @@ CREATE TABLE `users` (
   `remember_token` varchar(100) DEFAULT NULL,
   `role` enum('webmaster','super_admin','admin','teacher') NOT NULL DEFAULT 'teacher',
   `establishment_id` bigint(20) unsigned DEFAULT NULL,
+  `level_id` bigint(20) unsigned DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `users_email_unique` (`email`),
   KEY `users_establishment_id_foreign` (`establishment_id`),
-  CONSTRAINT `users_establishment_id_foreign` FOREIGN KEY (`establishment_id`) REFERENCES `establishments` (`id`)
+  KEY `users_level_id_foreign` (`level_id`),
+  CONSTRAINT `users_establishment_id_foreign` FOREIGN KEY (`establishment_id`) REFERENCES `establishments` (`id`),
+  CONSTRAINT `users_level_id_foreign` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -593,7 +601,6 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (2,'2_create_cache_
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (3,'3_create_establishments_table',3);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (4,'4_create_users_table',4);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (5,'6_create_academic_years_table',5);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (6,'7_create_staff_table',6);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (7,'8_create_levels_table',7);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (8,'9_create_branches_table',8);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (9,'10_add_branch_id_to_staff_table',9);
@@ -619,3 +626,7 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (28,'29_create_staf
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (29,'30_create_staff_seniority_table',29);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (30,'31_create_staff_performance_grants_table',30);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (31,'5_add_created_by_to_establishments_table',31);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (33,'32_add_level_id_to_programs_table',32);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (34,'2025_05_13_072519_add_level_id_to_users_table',33);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (35,'6_add_missing_fields_to_establishments_table',33);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (38,'7_create_staff_table',34);

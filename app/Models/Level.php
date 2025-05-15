@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Level extends Model
 {
@@ -13,8 +14,9 @@ class Level extends Model
    ];
 
    // Relationship: Level belongs to AcademicYear
-   public function academicYear()
-   {
-      return $this->belongsTo(AcademicYear::class);
-   }
+
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
 }

@@ -20,23 +20,4 @@ class Program extends Model
         return $this->belongsTo(Level::class);
     }
 
-    public function staff()
-    {
-        return $this->hasMany(ProgramStaff::class);
-    }
-
-    public function expenses()
-    {
-        return $this->hasMany(ProgramExpense::class);
-    }
-
-    public function invitations()
-    {
-        return $this->hasMany(ProgramInvitation::class);
-    }
-
-    public function generatedFiles()
-    {
-        return $this->hasMany(GeneratedFile::class);
-    }
 }

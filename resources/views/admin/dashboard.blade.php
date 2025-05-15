@@ -34,7 +34,7 @@
                     <span>مدير المؤسسة</span>
                     <i class="text-xs fas fa-chevron-down"></i>
                 </div>
-            </div>
+            </div> 
         </div>
     </nav>
 
@@ -76,7 +76,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
+                        <a href="{{ route('admin.staffs.index') }}" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
                             <i class="fas fa-chalkboard-teacher"></i>
                             <span>الأساتذة</span>
                             <span class="bg-blue-500 px-2 py-1 rounded-full text-white text-xs">24</span>
