@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Redirect;
 
 class EstablishmentController extends Controller
 {
@@ -79,9 +80,17 @@ class EstablishmentController extends Controller
         }
     }
 
-    public function show(Establishment $establishment)
+    public function show(\App\Models\Establishment $establishment)
     {
-        return response()->json(['data' => $establishment->load('creator')]);
+        // Eager load manager if needed
+        $establishment->load('manager');
+        return view('webmaster.establishments.index', compact('establishment'));
+    }
+
+    public function edit(Establishment $establishment)
+    {
+        $establishment->load('manager');
+        return view('webmaster.establishments.edit', compact('establishment'));
     }
 
     public function update(Request $request, Establishment $establishment)
@@ -89,35 +98,80 @@ class EstablishmentController extends Controller
         $request->validate([
             'name' => 'required|string|max:100',
             'location' => 'nullable|string',
+            'wilaya' => 'nullable|string|max:50',
+            'phone' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:100',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'registration_code' => 'required|string|max:50|unique:establishments,registration_code,' . $establishment->id,
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            // Manager fields (optional)
+            'manager_name' => 'nullable|string|max:255',
+            'manager_email' => 'nullable|email|max:100',
+            'manager_phone' => 'nullable|string|max:30',
         ]);
 
-        $data = $request->all();
+        $data = $request->only([
+            'name',
+            'location',
+            'wilaya',
+            'phone',
+            'email',
+            'registration_code',
+            'is_active'
+        ]);
 
         if ($request->hasFile('logo')) {
             if ($establishment->logo) {
                 Storage::disk('public')->delete($establishment->logo);
             }
-
             $file = $request->file('logo');
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $filename = \Illuminate\Support\Str::uuid() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('establishments/logos', $filename, 'public');
             $data['logo'] = $path;
         }
 
         $establishment->update($data);
-        return response()->json(['data' => $establishment]);
+
+        // Update manager info if provided
+        if ($establishment->manager) {
+            $managerData = [];
+            if ($request->filled('manager_name')) {
+                $managerData['name'] = $request->manager_name;
+            }
+            if ($request->filled('manager_email')) {
+                $managerData['email'] = $request->manager_email;
+            }
+            if ($request->filled('manager_phone')) {
+                $managerData['phone'] = $request->manager_phone;
+            }
+            if (!empty($managerData)) {
+                $establishment->manager->update($managerData);
+            }
+        }
+
+        return redirect()->route('webmaster.establishments.show', $establishment->id)
+            ->with('success', 'تم تحديث بيانات المؤسسة بنجاح');
     }
 
     public function destroy(Establishment $establishment)
     {
+        // Delete all users (admins/managers) linked to this establishment first
+        $establishment->manager()->delete();
+
         if ($establishment->logo) {
             Storage::disk('public')->delete($establishment->logo);
         }
 
         $establishment->delete();
-        return response()->json(null, 204);
+        // Redirect to dashboard and reload the page
+        return redirect()->route('webmaster.dashboard')->with('success', 'تم حذف المؤسسة بنجاح');
+    }
+
+    public function removeAdmin(User $user)
+    {
+        // Only remove the user, not the establishment
+        $establishmentId = $user->establishment_id;
+        $user->delete();
+        return Redirect::back()->with('success', 'تم حذف المدير بنجاح');
     }
 }

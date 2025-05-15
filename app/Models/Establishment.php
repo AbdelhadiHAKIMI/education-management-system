@@ -28,4 +28,14 @@ class Establishment extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
+
+    public function manager()
+    {
+        return $this->hasOne(User::class, 'establishment_id', 'id');
+    }
 }

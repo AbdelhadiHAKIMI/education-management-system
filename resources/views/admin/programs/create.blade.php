@@ -75,43 +75,22 @@
         
         <!-- Content Area -->
         <main class="flex-1 p-8">
-            <h1 class="mb-6 font-bold text-dark text-2xl">لوحة التحكم</h1>
-            
-            <!-- Academic Year Status Card -->
-            <div class="bg-white shadow-md mb-8 p-6 border-accent border-r-4 rounded-lg">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h2 class="font-semibold text-dark text-xl">السنة الدراسية الحالية</h2>
-                        <p class="mt-1 text-gray-600">2023/2024 - الفصل الثاني</p>
-                        <div class="flex items-center space-x-4 space-x-reverse mt-3">
-                            <div>
-                                <span class="text-gray-500 text-sm">تاريخ البدء</span>
-                                <p class="font-medium">05 سبتمبر 2023</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-500 text-sm">تاريخ الانتهاء</span>
-                                <p class="font-medium">30 مايو 2024</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-500 text-sm">الحالة</span>
-                                <p class="font-medium text-green-600">جارية</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex space-x-3 space-x-reverse">
-                        <button class="flex items-center bg-primary hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
-                            <i class="mr-2 fas fa-archive"></i> أرشفة السنة
-                        </button>
-                        <button id="startNewYearBtn" class="flex items-center bg-secondary hover:bg-green-700 px-4 py-2 rounded-lg text-white">
-                            <i class="mr-2 fas fa-calendar-plus"></i> بدء سنة جديدة
-                        </button>
-                    </div>
-                </div>
+            <div class="flex items-center justify-between mb-6">
+                <h1 class="font-bold text-dark text-2xl">لوحة التحكم</h1>
             </div>
+            <script>
+                // Show the wizard directly on page load
+                window.addEventListener('DOMContentLoaded', function() {
+                    document.getElementById('newYearWizard').classList.remove('hidden');
+                });
+            </script>
             
-            <!-- New Academic Year Wizard (Hidden by default) -->
+            <!-- Program Status Card -->
+            
+            
+            <!-- New Program (Hidden by default) -->
             <div id="newYearWizard" class="hidden bg-white shadow-md mb-8 p-6 rounded-lg">
-                <h2 class="mb-6 pb-2 border-b font-semibold text-dark text-xl">معالج بدء سنة دراسية جديدة</h2>
+                <h2 class="mb-6 pb-2 border-b font-semibold text-dark text-xl">معالج بدء برنامج جديد</h2>
                 
                 <!-- Steps Indicator -->
                 <div class="relative flex justify-between mb-8">
@@ -134,17 +113,17 @@
                 
                 <!-- Step 1: Basic Information -->
                 <div id="step1" class="step-content">
-                    <h3 class="mb-4 font-semibold text-dark text-lg">معلومات السنة الدراسية</h3>
+                    <h3 class="mb-4 font-semibold text-dark text-lg">معلومات البرنامج</h3>
                     
                     <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
                         <div>
-                            <label class="block mb-1 text-gray-700">اسم السنة الدراسية *</label>
+                            <label class="block mb-1 text-gray-700">اسم البرنامج *</label>
                             <input type="text" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" 
                                    placeholder="مثال: 2024/2025" required>
                         </div>
                         
                         <div>
-                            <label class="block mb-1 text-gray-700">نوع السنة *</label>
+                            <label class="block mb-1 text-gray-700">نوع البرنامج *</label>
                             <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
                                 <option value="">اختر النوع</option>
                                 <option>سنة دراسية كاملة</option>
@@ -165,7 +144,7 @@
                     </div>
                     
                     <div class="mt-6">
-                        <label class="block mb-1 text-gray-700">وصف السنة الدراسية</label>
+                        <label class="block mb-1 text-gray-700">وصف البرنامج</label>
                         <textarea class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" 
                                   rows="3" placeholder="أدخل وصفاً مختصراً"></textarea>
                     </div>

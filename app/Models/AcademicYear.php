@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+
 use Illuminate\Database\Eloquent\Model;
 
 class AcademicYear extends Model
 {
+
    // Mass assignable attributes
    protected $fillable = [
       'name',
@@ -20,3 +22,4 @@ class AcademicYear extends Model
       return $this->belongsTo(Establishment::class);
    }
 }
+

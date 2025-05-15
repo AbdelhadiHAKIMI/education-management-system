@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CsvProcessorController;
 use App\Http\Controllers\EstablishmentController;
 use App\Http\Controllers\StaffController;
 
@@ -23,15 +25,12 @@ Route::get('/reset-password/{token}', function ($token) {
 
 // Webmaster Routes
 Route::prefix('webmaster')->middleware(['auth'])->group(function () {
-   Route::get('/dashboard', function () {
-      return view('webmaster.dashboard');
-   })->name('webmaster.dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('webmaster.dashboard');
 
-   // Establishments Routes
-
-   Route::prefix('establishments')->group(function () {
-      Route::get('/', [EstablishmentController::class, 'index'])
-         ->name('webmaster.establishments.index');
+    // Establishments Routes
+    Route::prefix('establishments')->group(function () {
+        Route::get('/', [EstablishmentController::class, 'index'])
+            ->name('webmaster.establishments.index');
 
       Route::get('/create', function () {
          return view('webmaster.establishments.create');
@@ -40,9 +39,8 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
       Route::post('/store', [EstablishmentController::class, 'store'])
          ->name('webmaster.establishments.store');
 
-      Route::get('/{id}/edit', function ($id) {
-         return view('webmaster.establishments.edit', ['id' => $id]);
-      })->name('webmaster.establishments.edit');
+        Route::get('/{establishment}/edit', [EstablishmentController::class, 'edit'])
+            ->name('webmaster.establishments.edit');
 
       Route::get('/{establishment}', [EstablishmentController::class, 'show'])
          ->name('webmaster.establishments.show');
@@ -50,9 +48,12 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
       Route::put('/{establishment}', [EstablishmentController::class, 'update'])
          ->name('webmaster.establishments.update');
 
-      Route::delete('/{establishment}', [EstablishmentController::class, 'destroy'])
-         ->name('webmaster.establishments.destroy');
-   });
+        Route::delete('/{establishment}', [EstablishmentController::class, 'destroy'])
+            ->name('webmaster.establishments.destroy');
+
+        Route::delete('/remove-admin/{user}', [EstablishmentController::class, 'removeAdmin'])
+            ->name('webmaster.establishments.removeAdmin');
+    });
 });
 
 // Home Route
@@ -68,6 +69,7 @@ Route::get('/admin/dashboard', function () {
    return view('/admin/dashboard');
 })->name('admin.dashboard');
 
+
 Route::get('/admin/program/create', function () {
    return view('/admin/programs/create');
 });
@@ -82,3 +84,15 @@ Route::prefix('admin/staffs')->middleware(['auth'])->group(function () {
     Route::delete('/{staff}', [StaffController::class, 'destroy'])->name('admin.staffs.destroy');
     
 });
+Route::get('/admin/programs/index', function () {
+    return view('/admin/programs/index');
+});
+
+Route::get('/csv-processor', [CsvProcessorController::class, 'index'])->name('csv.processor');
+Route::post('/csv-processor/upload', [CsvProcessorController::class, 'upload'])->name('csv.upload');
+Route::post('/csv-processor/filter', [CsvProcessorController::class, 'filter'])->name('csv.filter');
+Route::post('/csv-processor/generate', [CsvProcessorController::class, 'generate'])->name('csv.generate');
+Route::get('/csv-processor/download', [CsvProcessorController::class, 'download'])->name('csv.download');
+Route::get('/csv-processor/show', [CsvProcessorController::class, 'show'])->name('csv.show');
+Route::get('/csv-processor/prototype', [CsvProcessorController::class, 'prototype'])->name('csv.prototype');
+Route::get('/csv-processor/prototype-xlsx', [CsvProcessorController::class, 'prototypeXlsx'])->name('csv.prototype.xlsx');

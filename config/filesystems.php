@@ -77,4 +77,23 @@ return [
         public_path('storage') => storage_path('app/public'),
     ],
 
+    'disks' => [
+    'local' => [
+        'driver' => 'local',
+        'root' => storage_path('app'),
+    ],
+    
+    'csv_uploads' => [
+        'driver' => 'local',
+        'root' => storage_path('app/csv_uploads'),
+    ],
+    
+    'csv_exports' => [
+        'driver' => 'local',
+        'root' => storage_path('app/csv_exports'),
+    ],
+    
+    // ... other disks
+],
+
 ];
