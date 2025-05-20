@@ -23,6 +23,13 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
+            $user = Auth::user();
+            // Store establishment info in session if user is admin and has establishment
+            if ($user->role === 'admin' && $user->establishment_id) {
+                $establishment = \App\Models\Establishment::find($user->establishment_id);
+                session(['establishment' => $establishment]);
+            }
+
             $role = Auth::user()->role;
 
             switch ($role) {
@@ -31,7 +38,7 @@ class AuthController extends Controller
                 case 'super_admin':
                     return redirect()->intended('admin/dashboard');
                 case 'admin':
-                    return redirect()->intended('admin/dashboard');
+                    return redirect()->intended('admin/dashboard'); 
                 case 'teacher':
                     return redirect()->intended('teacher/dashboard');
                 default:
