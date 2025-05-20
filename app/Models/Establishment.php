@@ -8,7 +8,7 @@ class Establishment extends Model
 {
     protected $fillable = [
         'name',
-        'location',
+        'location',      
         'wilaya',
         'phone',
         'email',

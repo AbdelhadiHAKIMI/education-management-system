@@ -102,7 +102,7 @@
                     </form>
                 </div>
             </div>
-        </aside>
+        </aside> 
 
         <!-- Content Area -->
         <main class="flex-1 p-8">
