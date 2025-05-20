@@ -5,6 +5,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CsvProcessorController;
 use App\Http\Controllers\EstablishmentController;
+use App\Http\Controllers\ClassroomsController;
+use App\Http\Controllers\ProgramInvitationImportController;
+use App\Http\Controllers\Admin\ProgramInvitationController;
+use App\Http\Controllers\ExamResultController;
 use App\Http\Controllers\StaffController;
 
 // Authentication Routes
@@ -61,9 +65,6 @@ Route::get('/', function () {
    return redirect()->route('login');
 });
 
-Route::get('/dashboard', function () {
-   return view('/webmaster/dashboard');
-});
 
 Route::get('/admin/dashboard', function () {
    return view('/admin/dashboard');
@@ -96,3 +97,24 @@ Route::get('/csv-processor/download', [CsvProcessorController::class, 'download'
 Route::get('/csv-processor/show', [CsvProcessorController::class, 'show'])->name('csv.show');
 Route::get('/csv-processor/prototype', [CsvProcessorController::class, 'prototype'])->name('csv.prototype');
 Route::get('/csv-processor/prototype-xlsx', [CsvProcessorController::class, 'prototypeXlsx'])->name('csv.prototype.xlsx');
+
+Route::get('/admin/students/classrooms', [ClassroomsController::class, 'index'])->name('admin.students.classrooms');
+Route::get('/admin/students/classrooms/generate', [ClassroomsController::class, 'generate'])->name('admin.students.classrooms.generate');
+
+Route::get('/admin/program-invitations/import', [ProgramInvitationImportController::class, 'showImportForm'])->name('admin.program_invitations.import.form');
+Route::post('/admin/program-invitations/import', [ProgramInvitationImportController::class, 'import'])->name('admin.program_invitations.import');
+
+Route::view('/admin/program-invitations/import-blade', 'admin.program_invitations.import')->name('admin.program_invitations.import.blade');
+
+Route::get('/admin/program-invitations/prototype', [ProgramInvitationImportController::class, 'prototype'])->name('admin.program_invitations.prototype');
+
+Route::get('admin/program-invitations/download-students', [ProgramInvitationController::class, 'downloadStudents'])->name('admin.program_invitations.download_students');
+
+Route::get('/admin/exam-results/prototype', [\App\Http\Controllers\Admin\ProgramInvitationController::class, 'examResultsPrototype'])->name('admin.exam_results.prototype');
+
+Route::get('/exam-results/prototype', [\App\Http\Controllers\Admin\ProgramInvitationController::class, 'examResultsPrototype']);
+
+Route::get('/exam-results/prototype-form', [ExamResultController::class, 'prototypeForm'])->name('exam_results.prototype.form');
+Route::get('/exam-results/prototype-download', [ExamResultController::class, 'prototypeDownload'])->name('exam_results.prototype.download');
+Route::post('/exam-results/import', [ExamResultController::class, 'importResults'])->name('exam_results.import');
+Route::get('/exam-results/reset', [ExamResultController::class, 'resetSelection'])->name('exam_results.prototype.reset');
