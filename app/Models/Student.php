@@ -16,6 +16,8 @@ class Student extends Model
       'student_phone',
       'quran_level',
       'branch_id',
+      'initial_classroom',
+      'level_id', // <-- use this
    ];
 
    // Relationship: Student belongs to Branch

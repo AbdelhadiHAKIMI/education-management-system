@@ -18,6 +18,8 @@ return new class extends Migration
          $table->string('student_phone', 20)->nullable();
          $table->enum('quran_level', ['مستظهر', 'خاتم'])->nullable();
          $table->foreignId('branch_id')->constrained('branches');
+         // No level_id here
+         $table->string('initial_classroom')->nullable();
          $table->timestamps();
       });
    }

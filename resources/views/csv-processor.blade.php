@@ -80,6 +80,17 @@
                     <div class="mb-3">
                         <input class="form-control" type="file" name="csv_file" required>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">المستوى الدراسي (سيتم تطبيقه على جميع الطلاب):</label>
+                        <select class="form-select" name="level_id" required>
+                            <option value="">اختر المستوى</option>
+                            @isset($levels)
+                            @foreach($levels as $level)
+                            <option value="{{ $level->id }}">{{ $level->name }}</option>
+                            @endforeach
+                            @endisset
+                        </select>
+                    </div>
                     <div class="mb-3 row">
                         <div class="col-md-6">
                             <label class="form-label">الشعبة (اختر رقم الشعبة الصحيح):</label>
@@ -157,8 +168,8 @@
                 <tbody>
                     @foreach($data as $row)
                     <tr>
-                        @foreach($row as $value)
-                        <td>{{ $value }}</td>
+                        @foreach($headers as $header)
+                        <td>{{ $row[$header] ?? '' }}</td>
                         @endforeach
                     </tr>
                     @endforeach

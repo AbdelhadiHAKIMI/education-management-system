@@ -10,6 +10,7 @@ use SplTempFileObject;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\Student;
 use App\Models\Branch;
+use App\Models\Level;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
@@ -21,12 +22,17 @@ class CsvProcessorController extends Controller
     public function index()
     {
         $branches = Branch::all(['id', 'name']);
-        return view('csv-processor', compact('branches'));
+        $levels = Level::all(['id', 'name']);
+        return view('csv-processor', compact('branches', 'levels'));
     }
 
     public function upload(Request $request)
     {
-        $request->validate(['csv_file' => 'required|file|mimes:csv,txt,xlsx|max:2048']);
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt,xlsx|max:2048',
+            'level_id' => 'required|exists:levels,id'
+        ]);
+        $levelId = $request->input('level_id');
 
         $file = $request->file('csv_file');
         $extension = strtolower($file->getClientOriginalExtension());
@@ -42,7 +48,8 @@ class CsvProcessorController extends Controller
             'مستوى حفظ القرآن' => 'quran_level',
             'مستوى حفظ القرآن (مستظهر أو خاتم فقط)' => 'quran_level',
             'الشعبة' => 'branch_id',
-            'الشعبة (اكتب اسم الشعبة وليس رقمها)' => 'branch_id'
+            'الشعبة (اكتب اسم الشعبة وليس رقمها)' => 'branch_id',
+            'القسم الأولي' => 'initial_classroom' // <-- add this line
         ];
 
         $branchesList = Branch::all(['id', 'name'])->keyBy('name');
@@ -72,6 +79,7 @@ class CsvProcessorController extends Controller
                     }
                 }
                 if (!empty($assoc['full_name']) && array_filter($assoc)) {
+                    $assoc['level_id'] = $levelId; // <-- set level_id for each student
                     $records[] = $assoc;
                 }
             }
@@ -93,6 +101,7 @@ class CsvProcessorController extends Controller
                     }
                 }
                 if (!empty($assoc['full_name']) && array_filter($assoc)) {
+                    $assoc['level_id'] = $levelId; // <-- set level_id for each student
                     $records[] = $assoc;
                 }
             }
@@ -130,6 +139,8 @@ class CsvProcessorController extends Controller
                 $skippedRows[] = "سطر رقم " . ($index + 2) . ": بيانات ناقصة";
                 continue;
             }
+
+            $studentData['level_id'] = $levelId; // <-- ensure level_id is set
 
             try {
                 Student::create($studentData);
@@ -188,7 +199,8 @@ class CsvProcessorController extends Controller
             'رقم هاتف الولي',
             'رقم هاتف الطالب',
             'مستوى حفظ القرآن',
-            'الشعبة'
+            'الشعبة',
+            'القسم الأولي' // <-- add this line
         ];
 
         $filename = 'students_export_' . date('Y-m-d') . '.csv';
@@ -213,17 +225,70 @@ class CsvProcessorController extends Controller
             'الحالة الصحية',
             'رقم هاتف الولي',
             'رقم هاتف الطالب',
-            'مستوى حفظ القرآن',
-            'الشعبة'
+            'مستوى حفظ القرآن (مستظهر أو خاتم فقط)',
+            'الشعبة (اكتب اسم الشعبة وليس رقمها)',
+            'القسم الأولي'
         ];
+
+        // Ensure each row is mapped to the correct headers for display
+        $displayData = [];
+        foreach ($data as $row) {
+            $displayRow = [];
+            foreach ($headers as $header) {
+                // Try both Arabic and English keys for robustness
+                if (isset($row[$header])) {
+                    $displayRow[$header] = $row[$header];
+                } else {
+                    // Map English keys to Arabic headers for display
+                    switch ($header) {
+                        case 'الاسم الكامل':
+                            $displayRow[$header] = $row['full_name'] ?? '';
+                            break;
+                        case 'تاريخ الميلاد':
+                            $displayRow[$header] = $row['birth_date'] ?? '';
+                            break;
+                        case 'المدرسة الأصلية':
+                            $displayRow[$header] = $row['origin_school'] ?? '';
+                            break;
+                        case 'الحالة الصحية':
+                            $displayRow[$header] = $row['health_conditions'] ?? '';
+                            break;
+                        case 'رقم هاتف الولي':
+                            $displayRow[$header] = $row['parent_phone'] ?? '';
+                            break;
+                        case 'رقم هاتف الطالب':
+                            $displayRow[$header] = $row['student_phone'] ?? '';
+                            break;
+                        case 'مستوى حفظ القرآن (مستظهر أو خاتم فقط)':
+                            $displayRow[$header] = $row['quran_level'] ?? '';
+                            break;
+                        case 'الشعبة (اكتب اسم الشعبة وليس رقمها)':
+                            // Try to show the branch name if possible
+                            if (isset($row['branch_id']) && is_numeric($row['branch_id'])) {
+                                $branch = \App\Models\Branch::find($row['branch_id']);
+                                $displayRow[$header] = $branch ? $branch->name : $row['branch_id'];
+                            } else {
+                                $displayRow[$header] = $row['branch_id'] ?? '';
+                            }
+                            break;
+                        case 'القسم الأولي':
+                            $displayRow[$header] = $row['initial_classroom'] ?? '';
+                            break;
+                        default:
+                            $displayRow[$header] = '';
+                    }
+                }
+            }
+            $displayData[] = $displayRow;
+        }
 
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $perPage = 10;
-        $currentItems = array_slice($data, ($currentPage - 1) * $perPage, $perPage);
+        $currentItems = array_slice($displayData, ($currentPage - 1) * $perPage, $perPage);
 
         $paginatedData = new LengthAwarePaginator(
             $currentItems,
-            count($data),
+            count($displayData),
             $perPage,
             $currentPage,
             ['path' => $request->url(), 'query' => $request->query()]
@@ -246,7 +311,8 @@ class CsvProcessorController extends Controller
             'رقم هاتف الولي',
             'رقم هاتف الطالب',
             'مستوى حفظ القرآن (مستظهر أو خاتم فقط)',
-            'الشعبة (اكتب اسم الشعبة وليس رقمها)'
+            'الشعبة (اكتب اسم الشعبة وليس رقمها)',
+            'القسم الأولي' // initial_classroom
         ];
 
         $quranLevels = ['مستظهر', 'خاتم'];
@@ -261,7 +327,8 @@ class CsvProcessorController extends Controller
             '---',
             '---',
             'اختر من: ' . implode(' أو ', $quranLevels),
-            'اختر من: ' . $branchList
+            'اختر من: ' . $branchList,
+            'اختياري (يمكن تركه فارغاً)' // initial_classroom
         ];
 
         $filename = 'students_prototype.csv';
@@ -278,7 +345,8 @@ class CsvProcessorController extends Controller
             '0612345678',
             '0698765432',
             'مستظهر',
-            $branches->first() ? $branches->first()->name : ''
+            $branches->first() ? $branches->first()->name : '',
+            'أ' // example initial_classroom
         ]);
 
         return response($csv->getContent())
@@ -296,7 +364,8 @@ class CsvProcessorController extends Controller
             'رقم هاتف الولي',
             'رقم هاتف الطالب',
             'مستوى حفظ القرآن',
-            'الشعبة'
+            'الشعبة',
+            'القسم الأولي' // initial_classroom
         ];
 
         $quranLevels = ['مستظهر', 'خاتم'];
@@ -319,7 +388,9 @@ class CsvProcessorController extends Controller
         $sheet->setCellValue('F2', '0698765432');
         $sheet->setCellValue('G2', $quranLevels[0]);
         $sheet->setCellValue('H2', $branches->first() ? $branches->first()->name : '');
+        $sheet->setCellValue('I2', 'أ'); // example initial_classroom
 
+        // Dropdown for quran_level (column G)
         $validationQuran = $sheet->getCell('G2')->getDataValidation();
         $validationQuran->setType(DataValidation::TYPE_LIST);
         $validationQuran->setErrorStyle(DataValidation::STYLE_STOP);
@@ -329,6 +400,7 @@ class CsvProcessorController extends Controller
         $validationQuran->setShowDropDown(true);
         $validationQuran->setFormula1('"' . implode(',', $quranLevels) . '"');
 
+        // Dropdown for branch name (column H)
         $validationBranch = $sheet->getCell('H2')->getDataValidation();
         $validationBranch->setType(DataValidation::TYPE_LIST);
         $validationBranch->setErrorStyle(DataValidation::STYLE_STOP);
@@ -337,6 +409,8 @@ class CsvProcessorController extends Controller
         $validationBranch->setShowErrorMessage(true);
         $validationBranch->setShowDropDown(true);
         $validationBranch->setFormula1('"' . implode(',', $branchNames) . '"');
+
+        // No dropdown for initial_classroom (column I), it's free text
 
         $branchSheet = $spreadsheet->createSheet();
         $branchSheet->setTitle('الشعب');
