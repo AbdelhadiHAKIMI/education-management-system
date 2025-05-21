@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,11 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+
         body {
             font-family: 'Tajawal', sans-serif;
         }
     </style>
 </head>
+
 <body class="bg-gray-50">
     <!-- Navigation -->
     <nav class="bg-blue-800 shadow-lg text-white">
@@ -21,16 +24,16 @@
                 <i class="text-2xl fas fa-graduation-cap"></i>
                 <span class="font-semibold text-xl">نظام الإدارة التعليمية</span>
             </div>
-            
+
             <div class="flex items-center space-x-6 space-x-reverse">
                 <a href="#" class="relative hover:text-blue-200">
                     <i class="fas fa-bell"></i>
                     <span class="-top-2 -right-2 absolute flex justify-center items-center bg-red-500 rounded-full w-5 h-5 text-white text-xs">3</span>
                 </a>
                 <div class="flex items-center space-x-2 space-x-reverse">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" 
-                         class="rounded-full w-8 h-8" 
-                         alt="صورة المستخدم">
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random"
+                        class="rounded-full w-8 h-8"
+                        alt="صورة المستخدم">
                     <span>مدير النظام</span>
                     <i class="text-xs fas fa-chevron-down"></i>
                 </div>
@@ -44,16 +47,16 @@
         <aside class="top-0 sticky bg-white shadow-md w-64 h-screen">
             <div class="p-4 border-gray-200 border-b">
                 <div class="flex items-center space-x-3 space-x-reverse">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" 
-                         class="rounded-full w-10 h-10" 
-                         alt="صورة المستخدم">
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random"
+                        class="rounded-full w-10 h-10"
+                        alt="صورة المستخدم">
                     <div>
                         <p class="font-medium">مدير النظام</p>
                         <p class="text-gray-500 text-xs">{{ Auth::user()->name }}</p>
                     </div>
                 </div>
             </div>
-            
+
             <div class="p-4">
                 <ul class="space-y-2 mt-4">
                     <li>
@@ -88,7 +91,7 @@
                         </a>
                     </li>
                 </ul>
-                
+
                 <div class="mt-8 pt-4 border-gray-200 border-t">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
@@ -99,7 +102,7 @@
                     </form>
                 </div>
             </div>
-        </aside>
+        </aside> 
 
         <!-- Content Area -->
         <main class="flex-1 p-8">
@@ -113,7 +116,7 @@
                     <span>إضافة مؤسسة جديدة</span>
                 </a>
             </div>
-            
+
             <!-- Stats Cards -->
             <div class="gap-6 grid grid-cols-1 md:grid-cols-3 mb-8">
                 <div class="bg-white shadow-md p-6 border-r-4 border-blue-500 rounded-lg">
@@ -127,7 +130,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-white shadow-md p-6 border-green-500 border-r-4 rounded-lg">
                     <div class="flex justify-between items-center">
                         <div>
@@ -139,7 +142,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-white shadow-md p-6 border-purple-500 border-r-4 rounded-lg">
                     <div class="flex justify-between items-center">
                         <div>
@@ -152,7 +155,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Establishments Table -->
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
@@ -168,64 +171,75 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
+                            @forelse($establishments as $index => $establishment)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3">1</td>
+                                <td class="px-4 py-3">{{ $establishments->firstItem() + $index }}</td>
                                 <td class="px-4 py-3 font-medium">
                                     <div class="flex items-center space-x-3 space-x-reverse">
                                         <div class="bg-blue-100 p-2 rounded-full">
                                             <i class="text-blue-600 fas fa-school"></i>
                                         </div>
                                         <div>
-                                            <p class="font-semibold">ثانوية الإخوة عمور</p>
-                                            <p class="text-gray-500 text-sm">البليدة</p>
+                                            <p class="font-semibold">{{ $establishment->name }}</p>
+                                            <p class="text-gray-500 text-sm">{{ $establishment->wilaya }}</p>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-3">عبد القادر بن عمر</td>
-                                <td class="px-4 py-3">324</td>
                                 <td class="px-4 py-3">
+                                    {{ $establishment->manager ? $establishment->manager->name : '-' }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <!-- If you want to ignore student number, just show '-' or leave blank -->
+                                    -
+                                </td>
+                                <td class="px-4 py-3">
+                                    @if($establishment->is_active)
                                     <span class="bg-green-100 px-3 py-1 rounded-full text-green-800 text-sm">نشطة</span>
+                                    @else
+                                    <span class="bg-red-100 px-3 py-1 rounded-full text-red-800 text-sm">معلقة</span>
+                                    @endif
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex space-x-2 space-x-reverse">
-                                        <a href="#" class="hover:bg-blue-50 p-2 rounded-full text-blue-600 hover:text-blue-800" title="عرض">
+                                        <a href="{{ route('webmaster.establishments.show', $establishment->id) }}" class="hover:bg-blue-50 p-2 rounded-full text-blue-600 hover:text-blue-800" title="عرض">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="#" class="hover:bg-yellow-50 p-2 rounded-full text-yellow-600 hover:text-yellow-800" title="تعديل">
+                                        <a href="{{ route('webmaster.establishments.edit', $establishment->id) }}" class="hover:bg-yellow-50 p-2 rounded-full text-yellow-600 hover:text-yellow-800" title="تعديل">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="#" class="hover:bg-red-50 p-2 rounded-full text-red-600 hover:text-red-800" title="حذف">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
+                                        <form action="{{ route('webmaster.establishments.destroy', $establishment->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف المؤسسة؟');" style="display:inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="hover:bg-red-50 p-2 rounded-full text-red-600 hover:text-red-800" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
-                            
-                            <!-- More rows... -->
+                            @empty
+                            <tr>
+                                <td colspan="6" class="py-6 text-gray-500 text-center">لا توجد مؤسسات مسجلة.</td>
+                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- Pagination -->
                 <div class="flex justify-between items-center px-4 py-3 border-gray-200 border-t">
-                    <div class="flex flex-1 justify-between items-center">
-                        <button class="inline-flex relative items-center bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 text-sm">
-                            السابق
-                        </button>
-                        <div class="hidden md:flex space-x-1 space-x-reverse">
-                            <button class="bg-blue-600 px-3 py-1 rounded-md text-white">1</button>
-                            <button class="hover:bg-gray-100 px-3 py-1 rounded-md">2</button>
-                            <button class="hover:bg-gray-100 px-3 py-1 rounded-md">3</button>
-                            <span class="px-3 py-1">...</span>
-                            <button class="hover:bg-gray-100 px-3 py-1 rounded-md">8</button>
-                        </div>
-                        <button class="inline-flex relative items-center bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-md font-medium text-gray-700 text-sm">
-                            التالي
-                        </button>
-                    </div>
+                    {{ $establishments->links() }}
                 </div>
             </div>
+            @if(session('success'))
+            <script>
+                // Optional: show a message, then reload
+                alert("{{ session('success') }}");
+                window.location.reload();
+            </script>
+            @endif
         </main>
     </div>
 </body>
+
 </html>
