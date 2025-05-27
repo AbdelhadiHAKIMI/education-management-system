@@ -133,33 +133,34 @@
                                 <button type="reset" class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-lg text-gray-800">
                                     إلغاء
                                 </button>
+                                {{-- This button submits the form and triggers the update function in the controller --}}
                                 <button type="submit" class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg text-white">
                                     <i class="fas fa-save"></i>
                                     <span>تحديث المؤسسة</span>
                                 </button>
-                                {{-- Delete Establishment Button --}}
-                                <form action="{{ route('webmaster.establishments.destroy', $establishment->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف المؤسسة؟ سيتم حذف جميع بيانات المؤسسة بشكل نهائي.');" style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="bg-red-600 hover:bg-red-700 ml-2 px-6 py-2 rounded-lg text-white">
-                                        <i class="fas fa-trash"></i>
-                                        حذف المؤسسة
-                                    </button>
-                                </form>
-                                {{-- Delete Admin Button --}}
-                                @if($establishment->manager)
-                                <form action="{{ route('webmaster.establishments.removeAdmin', $establishment->manager->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف المدير؟');" style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 ml-2 px-6 py-2 rounded-lg text-white">
-                                        <i class="fas fa-user-slash"></i>
-                                        حذف المدير
-                                    </button>
-                                </form>
-                                @endif
                             </div>
                         </div>
                     </form>
+                    {{-- Delete Establishment Button --}}
+                    <form action="{{ route('webmaster.establishments.destroy', $establishment->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف المؤسسة؟ سيتم حذف جميع بيانات المؤسسة بشكل نهائي.');" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="bg-red-600 hover:bg-red-700 ml-2 px-6 py-2 rounded-lg text-white">
+                            <i class="fas fa-trash"></i>
+                            حذف المؤسسة
+                        </button>
+                    </form>
+                    {{-- Delete Admin Button --}}
+                    @if($establishment->manager)
+                    <form action="{{ route('webmaster.establishments.removeAdmin', $establishment->manager->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف المدير؟');" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 ml-2 px-6 py-2 rounded-lg text-white">
+                            <i class="fas fa-user-slash"></i>
+                            حذف المدير
+                        </button>
+                    </form>
+                    @endif
                 </div>
             </div>
         </main>
