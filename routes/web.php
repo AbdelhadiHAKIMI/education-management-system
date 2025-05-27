@@ -10,6 +10,7 @@ use App\Http\Controllers\ProgramInvitationImportController;
 use App\Http\Controllers\Admin\ProgramInvitationController;
 use App\Http\Controllers\ExamResultController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\Admin\LevelController;
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -29,12 +30,12 @@ Route::get('/reset-password/{token}', function ($token) {
 
 // Webmaster Routes
 Route::prefix('webmaster')->middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('webmaster.dashboard');
+   Route::get('/dashboard', [DashboardController::class, 'index'])->name('webmaster.dashboard');
 
-    // Establishments Routes
-    Route::prefix('establishments')->group(function () {
-        Route::get('/', [EstablishmentController::class, 'index'])
-            ->name('webmaster.establishments.index');
+   // Establishments Routes
+   Route::prefix('establishments')->group(function () {
+      Route::get('/', [EstablishmentController::class, 'index'])
+         ->name('webmaster.establishments.index');
 
       Route::get('/create', function () {
          return view('webmaster.establishments.create');
@@ -43,8 +44,8 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
       Route::post('/store', [EstablishmentController::class, 'store'])
          ->name('webmaster.establishments.store');
 
-        Route::get('/{establishment}/edit', [EstablishmentController::class, 'edit'])
-            ->name('webmaster.establishments.edit');
+      Route::get('/{establishment}/edit', [EstablishmentController::class, 'edit'])
+         ->name('webmaster.establishments.edit');
 
       Route::get('/{establishment}', [EstablishmentController::class, 'show'])
          ->name('webmaster.establishments.show');
@@ -52,12 +53,12 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
       Route::put('/{establishment}', [EstablishmentController::class, 'update'])
          ->name('webmaster.establishments.update');
 
-        Route::delete('/{establishment}', [EstablishmentController::class, 'destroy'])
-            ->name('webmaster.establishments.destroy');
+      Route::delete('/{establishment}', [EstablishmentController::class, 'destroy'])
+         ->name('webmaster.establishments.destroy');
 
-        Route::delete('/remove-admin/{user}', [EstablishmentController::class, 'removeAdmin'])
-            ->name('webmaster.establishments.removeAdmin');
-    });
+      Route::delete('/remove-admin/{user}', [EstablishmentController::class, 'removeAdmin'])
+         ->name('webmaster.establishments.removeAdmin');
+   });
 });
 
 // Home Route
@@ -76,17 +77,16 @@ Route::get('/admin/program/create', function () {
 });
 
 Route::prefix('admin/staffs')->middleware(['auth'])->group(function () {
-    Route::get('/', [StaffController::class, 'index'])->name('admin.staffs.index');
-    Route::get('/create', [StaffController::class, 'create'])->name('admin.staffs.create');
-    Route::post('/', [StaffController::class, 'store'])->name('admin.staffs.store');
-    Route::get('/{staff}', [StaffController::class, 'show'])->name('admin.staffs.show');
-    Route::get('/{staff}/edit', [StaffController::class, 'edit'])->name('admin.staffs.edit');
-    Route::put('/{staff}', [StaffController::class, 'update'])->name('admin.staffs.update');
-    Route::delete('/{staff}', [StaffController::class, 'destroy'])->name('admin.staffs.destroy');
-    
+   Route::get('/', [StaffController::class, 'index'])->name('admin.staffs.index');
+   Route::get('/create', [StaffController::class, 'create'])->name('admin.staffs.create');
+   Route::post('/', [StaffController::class, 'store'])->name('admin.staffs.store');
+   Route::get('/{staff}', [StaffController::class, 'show'])->name('admin.staffs.show');
+   Route::get('/{staff}/edit', [StaffController::class, 'edit'])->name('admin.staffs.edit');
+   Route::put('/{staff}', [StaffController::class, 'update'])->name('admin.staffs.update');
+   Route::delete('/{staff}', [StaffController::class, 'destroy'])->name('admin.staffs.destroy');
 });
 Route::get('/admin/programs/index', function () {
-    return view('/admin/programs/index');
+   return view('/admin/programs/index');
 });
 
 Route::get('/csv-processor', [CsvProcessorController::class, 'index'])->name('csv.processor');
@@ -118,3 +118,15 @@ Route::get('/exam-results/prototype-form', [ExamResultController::class, 'protot
 Route::get('/exam-results/prototype-download', [ExamResultController::class, 'prototypeDownload'])->name('exam_results.prototype.download');
 Route::post('/exam-results/import', [ExamResultController::class, 'importResults'])->name('exam_results.import');
 Route::get('/exam-results/reset', [ExamResultController::class, 'resetSelection'])->name('exam_results.prototype.reset');
+
+Route::get('/admin/levels/dashboard', function () {
+   return view('admin.levels.dashboard');
+})->name('admin.levels.dashboard');
+
+Route::prefix('admin/levels')->middleware(['auth'])->group(function () {
+   Route::get('/dashboard', [LevelController::class, 'index'])->name('admin.levels.dashboard');
+   Route::post('/', [LevelController::class, 'store'])->name('admin.levels.store');
+   Route::put('/{level}', [LevelController::class, 'update'])->name('admin.levels.update');
+   Route::delete('/{level}', [LevelController::class, 'destroy'])->name('admin.levels.destroy');
+   Route::get('/{level}', [LevelController::class, 'show'])->name('admin.levels.show');
+});
