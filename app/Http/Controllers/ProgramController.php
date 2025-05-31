@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Program;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProgramController extends Controller
 {
@@ -11,7 +12,15 @@ class ProgramController extends Controller
     public function index()
     {
         $programs = Program::all();
-        return response()->json($programs);
+        return view('admin.programs.index', compact('programs'));
+    }
+
+    // Show the form for creating a new program
+    public function create()
+    {
+        $academicYears = \App\Models\AcademicYear::all();
+        $levels = \App\Models\Level::all();
+        return view('admin.programs.create', compact('academicYears', 'levels'));
     }
 
     // Store a newly created program in storage
@@ -26,10 +35,17 @@ class ProgramController extends Controller
             'registration_fees' => 'required|numeric|min:0',
             'is_active' => 'boolean',
             'created_by_id' => 'required|exists:users,id',
+            'level_id' => 'required|exists:levels,id',
         ]);
 
+        $establishmentId = session('establishment')->id ?? (Auth::user()->establishment_id ?? null);
+        $validated['establishment_id'] = $establishmentId;
+        
         $program = Program::create($validated);
-        return response()->json($program, 201);
+
+        // Redirect to edit page to allow adding teachers/students later, or to index
+        return redirect()->route('admin.programs.edit', ['program' => $program->id])
+            ->with('success', 'تم إنشاء البرنامج بنجاح. يمكنك الآن إضافة الأساتذة أو الطلاب من صفحة التعديل إذا رغبت.');
     }
 
     // Display the specified program

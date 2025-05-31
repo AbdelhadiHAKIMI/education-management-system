@@ -20,6 +20,7 @@ return new class extends Migration
          $table->foreignId('establishment_id')->constrained('establishments');
          $table->timestamps();
       });
+    
    }
 
    public function down()

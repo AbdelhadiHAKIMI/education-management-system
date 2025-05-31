@@ -112,52 +112,80 @@
                 </div>
                 
                 <!-- Step 1: Basic Information -->
-                <div id="step1" class="step-content">
-                    <h3 class="mb-4 font-semibold text-dark text-lg">معلومات البرنامج</h3>
-                    
-                    <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
-                        <div>
-                            <label class="block mb-1 text-gray-700">اسم البرنامج *</label>
-                            <input type="text" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" 
-                                   placeholder="مثال: 2024/2025" required>
+                <form method="POST" action="{{ route('admin.programs.store') }}">
+                    @csrf
+                    <div id="step1" class="step-content">
+                        <h3 class="mb-4 font-semibold text-dark text-lg">معلومات البرنامج</h3>
+                        <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
+                            <div>
+                                <label class="block mb-1 text-gray-700">اسم البرنامج *</label>
+                                <input name="name" type="text" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" 
+                                       placeholder="مثال: التربص الصيفي" required>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-gray-700">نوع البرنامج *</label>
+                                <select name="type" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                                    <option value="">اختر النوع</option>
+                                    <option value="سنة دراسية كاملة">سنة دراسية كاملة</option>
+                                    <option value="فصل دراسي">فصل دراسي</option>
+                                    <option value="دورة تكوينية">دورة تكوينية</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-gray-700">تاريخ البدء *</label>
+                                <input name="start_date" type="date" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-gray-700">تاريخ الانتهاء *</label>
+                                <input name="end_date" type="date" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-gray-700">السنة الدراسية *</label>
+                                <select name="academic_year_id" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                                    <option value="">اختر السنة الدراسية</option>
+                                    @foreach($academicYears as $year)
+                                        <option value="{{ $year->id }}">{{ $year->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-gray-700">المستوى *</label>
+                                <select name="level_id" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                                    <option value="">اختر المستوى</option>
+                                    @foreach($levels as $level)
+                                        <option value="{{ $level->id }}">{{ $level->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-gray-700">رسوم التسجيل *</label>
+                                <input name="registration_fees" type="number" min="0" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                            </div>
+                            <div>
+                                <label class="block mb-1 text-gray-700">نشط؟</label>
+                                <select name="is_active" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full">
+                                    <option value="1">نعم</option>
+                                    <option value="0">لا</option>
+                                </select>
+                            </div>
                         </div>
-                        
-                        <div>
-                            <label class="block mb-1 text-gray-700">نوع البرنامج *</label>
-                            <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
-                                <option value="">اختر النوع</option>
-                                <option>سنة دراسية كاملة</option>
-                                <option>فصل دراسي</option>
-                                <option>دورة تكوينية</option>
-                            </select>
+                        <div class="mt-6">
+                            <label class="block mb-1 text-gray-700">وصف البرنامج</label>
+                            <textarea name="description" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" 
+                                      rows="3" placeholder="أدخل وصفاً مختصراً"></textarea>
                         </div>
-                        
-                        <div>
-                            <label class="block mb-1 text-gray-700">تاريخ البدء *</label>
-                            <input type="date" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
-                        </div>
-                        
-                        <div>
-                            <label class="block mb-1 text-gray-700">تاريخ الانتهاء *</label>
-                            <input type="date" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                        <input type="hidden" name="created_by_id" value="{{ auth()->id() }}">
+                        <input type="hidden" name="establishment_id" value="{{ session('establishment')->id ?? (auth()->user()->establishment_id ?? '') }}">
+                        <div class="flex justify-end space-x-4 space-x-reverse mt-8">
+                            <a href="{{ route('admin.programs.index') }}" class="hover:bg-gray-100 px-6 py-2 border border-gray-300 rounded-lg text-gray-700">
+                                إلغاء
+                            </a>
+                            <button type="submit" class="bg-primary hover:bg-blue-700 px-6 py-2 rounded-lg text-white">
+                                حفظ البرنامج
+                            </button>
                         </div>
                     </div>
-                    
-                    <div class="mt-6">
-                        <label class="block mb-1 text-gray-700">وصف البرنامج</label>
-                        <textarea class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" 
-                                  rows="3" placeholder="أدخل وصفاً مختصراً"></textarea>
-                    </div>
-                    
-                    <div class="flex justify-end space-x-4 space-x-reverse mt-8">
-                        <button type="button" class="hover:bg-gray-100 px-6 py-2 border border-gray-300 rounded-lg text-gray-700">
-                            إلغاء
-                        </button>
-                        <button type="button" onclick="nextStep(2)" class="bg-primary hover:bg-blue-700 px-6 py-2 rounded-lg text-white">
-                            التالي <i class="fa-arrow-left ml-2 fas"></i>
-                        </button>
-                    </div>
-                </div>
+                </form>
                 
                 <!-- Step 2: Program Structure -->
                 <div id="step2" class="hidden step-content">

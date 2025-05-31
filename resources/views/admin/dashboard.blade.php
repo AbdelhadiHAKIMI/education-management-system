@@ -154,7 +154,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('admin.staffs.index') }}" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
+                        <a href="#" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
                             <i class="fas fa-chalkboard-teacher"></i>
                             <span>المؤطرين</span>
                             <span class="bg-blue-500 px-2 py-1 rounded-full text-white text-xs">24</span>
@@ -218,7 +218,7 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <p class="text-gray-500">الطلاب المسجلين</p>
-                            <h3 class="font-bold text-2xl">324</h3>
+                            <h3 class="font-bold text-2xl">{{ $studentsCount }}</h3>
                         </div>
                         <div class="bg-blue-100 p-3 rounded-full">
                             <i class="text-blue-600 fas fa-users"></i>
@@ -233,7 +233,7 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <p class="text-gray-500">البرامج النشطة</p>
-                            <h3 class="font-bold text-2xl">{{ \App\Models\Program::where('is_active', true)->count() }}</h3>
+                            <h3 class="font-bold text-2xl">{{ $programsCount }}</h3>
                         </div>
                         <div class="bg-green-100 p-3 rounded-full">
                             <i class="text-green-600 fas fa-calendar-check"></i>
@@ -248,7 +248,7 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <p class="text-gray-500">المدفوعات الشهرية</p>
-                            <h3 class="font-bold text-2xl">2,450,000 د.ج</h3>
+                            <h3 class="font-bold text-2xl">{{ number_format($monthlyPayments, 0, '.', ',') }} د.ج</h3>
                         </div>
                         <div class="bg-yellow-100 p-3 rounded-full">
                             <i class="text-yellow-600 fas fa-donate"></i>
@@ -263,7 +263,7 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <p class="text-gray-500">نسبة الحضور</p>
-                            <h3 class="font-bold text-2xl">89%</h3>
+                            <h3 class="font-bold text-2xl">{{ $attendanceRate }}%</h3>
                         </div>
                         <div class="bg-purple-100 p-3 rounded-full">
                             <i class="text-purple-600 fas fa-user-check"></i>
@@ -273,7 +273,7 @@
                         <i class="fas fa-arrow-up"></i> 5% عن الأسبوع الماضي
                     </p>
                 </div>
-            </div>
+            </div> 
 
             <!-- Programs Section -->
             @php
@@ -322,48 +322,46 @@
             <div class="bg-white shadow-md p-6 rounded-lg">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="font-semibold text-gray-800 text-xl">أحدث الأنشطة</h2>
-                    <a href="#" class="text-blue-600 hover:underline">عرض الكل</a>
+                    <a href="#" id="show-all-activities" class="text-blue-600 hover:underline">عرض الكل</a>
                 </div>
+                <div class="space-y-4" id="activities-list">
+                    @foreach($recentActivities as $idx => $activity)
+                        <div class="flex items-start space-x-3 space-x-reverse activity-item" style="{{ $idx > 3 ? 'display:none;' : '' }}">
+                            <div class="{{ $activity['icon_bg'] }} p-2 rounded-full">
+                                <i class="{{ $activity['icon_color'] }} {{ $activity['icon'] }}"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium">{{ $activity['title'] }}</p>
+                                <p class="text-gray-500 text-sm">{{ $activity['desc'] }}</p>
+                                <p class="text-gray-400 text-xs">{{ $activity['time'] }}</p>
+                            </div>
 
-                <div class="space-y-4">
-                    <div class="flex items-start space-x-3 space-x-reverse">
-                        <div class="bg-blue-100 p-2 rounded-full">
-                            <i class="text-blue-600 fas fa-user-plus"></i>
+                
                         </div>
-                        <div class="flex-1">
-                            <p class="font-medium">تم تسجيل 5 طلاب جدد</p>
-                            <p class="text-gray-500 text-sm">في برنامج اللغة الإنجليزية</p>
-                            <p class="text-gray-400 text-xs">منذ ساعتين</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start space-x-3 space-x-reverse">
-                        <div class="bg-green-100 p-2 rounded-full">
-                            <i class="text-green-600 fas fa-money-bill-wave"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-medium">تم تسديد 3 مدفوعات</p>
-                            <p class="text-gray-500 text-sm">إجمالي المبلغ: 75,000 د.ج</p>
-                            <p class="text-gray-400 text-xs">منذ 5 ساعات</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start space-x-3 space-x-reverse">
-                        <div class="bg-purple-100 p-2 rounded-full">
-                            <i class="text-purple-600 fas fa-user-check"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-medium">تقرير الحضور اليومي</p>
-                            <p class="text-gray-500 text-sm">نسبة الحضور: 92%</p>
-                            <p class="text-gray-400 text-xs">منذ يوم</p>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </main>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const showAllBtn = document.getElementById('show-all-activities');
+        const activityItems = document.querySelectorAll('.activity-item');
+        let expanded = false;
+        showAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            expanded = !expanded;
+            activityItems.forEach((item, idx) => {
+                if (expanded) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = idx > 3 ? 'none' : '';
+                }
+            });
+            showAllBtn.textContent = expanded ? 'عرض أقل' : 'عرض الكل';
+        });
+    });
+</script>
 </body>
-
-</html>
 
 </html>

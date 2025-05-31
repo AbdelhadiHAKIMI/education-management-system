@@ -67,8 +67,8 @@
                         <i class="fas fa-file-import"></i>
                         <span>رفع ملف CSV</span>
                     </button>
-                    <!-- Add New Teacher Button -->
-                    <button onclick="openAddModal()" class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
+                    <!-- Add New Student Button -->
+                    <button onclick="openAddStudentModal()" class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
                         <i class="fas fa-plus"></i>
                         <span>أضف طالب</span>
                     </button>
@@ -186,6 +186,87 @@
             </div>
         </main>
     </div>
+
+    <!-- Add Student Modal -->
+   <!-- Add Student Modal -->
+<div id="addStudentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+        <div class="flex justify-between items-center border-b border-gray-200 p-4">
+            <h3 class="font-bold text-lg">إضافة طالب جديد</h3>
+            <button onclick="closeAddStudentModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form class="p-6 space-y-4 overflow-y-auto flex-1" style="max-height:60vh;" method="POST" action="{{ route('students.store') }}">
+            @csrf
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-right text-gray-700 mb-2 font-medium">الاسم الكامل</label>
+                    <input name="full_name" type="text" required 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right">
+                </div>
+                
+                <div>
+                    <label class="block text-right text-gray-700 mb-2 font-medium">تاريخ الميلاد</label>
+                    <input name="birth_date" type="date" required 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right">
+                </div>
+                
+                <div>
+                    <label class="block text-right text-gray-700 mb-2 font-medium">المدرسة الأصلية</label>
+                    <input name="origin_school" type="text" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right">
+                </div>
+                
+                <div>
+                    <label class="block text-right text-gray-700 mb-2 font-medium">الحالة الصحية</label>
+                    <input name="health_conditions" type="text" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right">
+                </div>
+                
+                <div>
+                    <label class="block text-right text-gray-700 mb-2 font-medium">هاتف الولي</label>
+                    <input name="parent_phone" type="text" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right">
+                </div>
+                
+                <div>
+                    <label class="block text-right text-gray-700 mb-2 font-medium">هاتف الطالب</label>
+                    <input name="student_phone" type="text" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right">
+                </div>
+                
+                <div>
+                    <label class="block text-right text-gray-700 mb-2 font-medium">مستوى حفظ القرآن</label>
+                    <input name="quran_level" type="text" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right">
+                </div>
+                
+                <div>
+                    <label class="block text-right text-gray-700 mb-2 font-medium">الشعبة</label>
+                    <select name="branch_id" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right">
+                        @foreach(\App\Models\Branch::all() as $branch)
+                            <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            
+            <div class="pt-4 border-t border-gray-200 flex justify-end space-x-3 space-x-reverse bg-white sticky bottom-0">
+                <button type="button" onclick="closeAddStudentModal()" 
+                        class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                    إلغاء
+                </button>
+                <button type="submit" 
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    حفظ الطالب
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('student-search');
@@ -209,6 +290,13 @@
             searchInput.addEventListener('input', filterTable);
             statusFilter.addEventListener('change', filterTable);
         });
+
+        function openAddStudentModal() {
+            document.getElementById('addStudentModal').classList.remove('hidden');
+        }
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').classList.add('hidden');
+        }
     </script>
 </body>
 </html>
