@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ProgramInvitationController;
 use App\Http\Controllers\ExamResultController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\Admin\LevelController;
+use App\Http\Controllers\AcademicYearController;
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -129,4 +130,17 @@ Route::prefix('admin/levels')->middleware(['auth'])->group(function () {
    Route::put('/{level}', [LevelController::class, 'update'])->name('admin.levels.update');
    Route::delete('/{level}', [LevelController::class, 'destroy'])->name('admin.levels.destroy');
    Route::get('/{level}', [LevelController::class, 'show'])->name('admin.levels.show');
+});
+
+Route::post('/academic-years/{id}/activate', [AcademicYearController::class, 'activate'])->name('academic-years.activate');
+
+// Students CRUD routes (add under admin prefix, with auth middleware)
+Route::prefix('admin/students')->middleware(['auth'])->group(function () {
+   Route::get('/', [\App\Http\Controllers\Admin\StudentController::class, 'index'])->name('admin.students.index');
+   Route::get('/create', [\App\Http\Controllers\Admin\StudentController::class, 'create'])->name('admin.students.create');
+   Route::post('/', [\App\Http\Controllers\Admin\StudentController::class, 'store'])->name('admin.students.store');
+   Route::get('/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'show'])->name('admin.students.show');
+   Route::get('/{student}/edit', [\App\Http\Controllers\Admin\StudentController::class, 'edit'])->name('admin.students.edit');
+   Route::put('/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'update'])->name('admin.students.update');
+   Route::delete('/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'destroy'])->name('admin.students.destroy');
 });

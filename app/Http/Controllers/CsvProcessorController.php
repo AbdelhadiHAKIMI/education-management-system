@@ -11,28 +11,55 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\Student;
 use App\Models\Branch;
 use App\Models\Level;
+use App\Models\AcademicYear;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class CsvProcessorController extends Controller
 {
     public function index()
     {
-        $branches = Branch::all(['id', 'name']);
-        $levels = Level::all(['id', 'name']);
+        $user = Auth::user();
+        $establishmentId = $user ? $user->establishment_id : null;
+        $branches = $establishmentId
+            ? Branch::whereHas('level.academicYear', function ($q) use ($establishmentId) {
+                $q->where('establishment_id', $establishmentId);
+            })->get(['id', 'name'])
+            : Branch::all(['id', 'name']);
+        $levels = $establishmentId
+            ? Level::whereHas('academicYear', function ($q) use ($establishmentId) {
+                $q->where('establishment_id', $establishmentId);
+            })->get(['id', 'name'])
+            : Level::all(['id', 'name']);
         return view('csv-processor', compact('branches', 'levels'));
     }
 
     public function upload(Request $request)
     {
+        $user = Auth::user();
+        $establishmentId = $user ? $user->establishment_id : null;
         $request->validate([
             'csv_file' => 'required|file|mimes:csv,txt,xlsx|max:2048',
             'level_id' => 'required|exists:levels,id'
         ]);
         $levelId = $request->input('level_id');
+        // Get the active academic year for the selected level's establishment
+        $level = \App\Models\Level::find($levelId);
+        $activeAcademicYearId = null;
+        if ($level && $establishmentId && $level->academicYear->establishment_id == $establishmentId) {
+            $activeAcademicYear = AcademicYear::where('establishment_id', $establishmentId)
+                ->where('status', true)
+                ->first();
+            if ($activeAcademicYear) {
+                $activeAcademicYearId = $activeAcademicYear->id;
+            }
+        } else {
+            return back()->with('error', 'المستوى غير متوافق مع المؤسسة.');
+        }
 
         $file = $request->file('csv_file');
         $extension = strtolower($file->getClientOriginalExtension());
@@ -52,7 +79,11 @@ class CsvProcessorController extends Controller
             'القسم الأولي' => 'initial_classroom' // <-- add this line
         ];
 
-        $branchesList = Branch::all(['id', 'name'])->keyBy('name');
+        $branchesList = $establishmentId
+            ? Branch::whereHas('level.academicYear', function ($q) use ($establishmentId) {
+                $q->where('establishment_id', $establishmentId);
+            })->get(['id', 'name'])->keyBy('name')
+            : Branch::all(['id', 'name'])->keyBy('name');
 
         if ($extension === 'xlsx') {
             // Convert XLSX to CSV in-memory
@@ -141,6 +172,9 @@ class CsvProcessorController extends Controller
             }
 
             $studentData['level_id'] = $levelId; // <-- ensure level_id is set
+            if ($activeAcademicYearId) {
+                $studentData['academic_year_id'] = $activeAcademicYearId;
+            }
 
             try {
                 Student::create($studentData);
