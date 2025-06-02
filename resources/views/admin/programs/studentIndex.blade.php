@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,31 +13,53 @@
         }
     </style>
 </head>
-
 <body class="bg-gray-50">
-    <x-admin.navigation />
+    <nav class="bg-green-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <i class="fas fa-graduation-cap text-2xl"></i>
+                <span class="text-xl font-semibold">ثانوية الإخوة عمور</span>
+            </div>
+            <div class="flex items-center space-x-6 space-x-reverse">
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <img src="https://ui-avatars.com/api/?name=مدير+المدرسة&background=random" class="w-8 h-8 rounded-full">
+                    <span>مدير المدرسة</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <div class="flex">
-        <x-admin.sidebar />
+        <aside class="w-64 bg-white shadow-md h-screen sticky top-0">
+            <div class="p-4">
+                <ul class="space-y-2 mt-6">
+                    <li>
+                        <a href="#" class="flex items-center space-x-2 space-x-reverse p-3 hover:bg-gray-100 rounded-lg">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>لوحة التحكم</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center space-x-2 space-x-reverse p-3 bg-green-100 text-green-800 rounded-lg">
+                            <i class="fas fa-users"></i>
+                            <span>الطلاب</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center space-x-2 space-x-reverse p-3 hover:bg-gray-100 rounded-lg">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <span>الأساتذة</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
         <main class="flex-1 p-8">
-            {{-- Success or Error Alerts --}}
-            @if(session('success'))
-                <div class="mb-4 px-4 py-3 rounded bg-green-100 text-green-800 border border-green-200 text-right">
-                    {{ session('success') }}
-                </div>
-            @endif
-            @if($errors->any())
-                <div class="mb-4 px-4 py-3 rounded bg-red-100 text-red-800 border border-red-200 text-right">
-                    <ul class="list-disc pr-5">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h1 class="font-bold text-gray-800 text-2xl">إدارة الطلاب</h1>
-                    <p class="text-gray-600">قائمة طلاب {{ $students->first()?->branch?->level?->academicYear?->establishment?->name ?? '' }}</p>
+                    <p class="text-gray-600">قائمة الطلاب المعنيين بالبرنامج</p>
                 </div>
                 <div class="flex space-x-3 space-x-reverse">
                     <!-- CSV Upload Button -->
@@ -79,85 +100,95 @@
                 </div>
             </div>
             
-
             <!-- Students Table -->
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">معرف الطالب</th>
+                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">الرقم</th>
                                 <th class="px-4 py-3 font-semibold text-gray-700 text-right">الاسم الكامل</th>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">تاريخ الميلاد</th>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">المستوى</th>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">الشعبة</th>
                                 <th class="px-4 py-3 font-semibold text-gray-700 text-right">الحالة</th>
+                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">المبلغ المدفوع</th>
                                 <th class="px-4 py-3 font-semibold text-gray-700 text-right">الإجراءات</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            @forelse($students as $student)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3">{{ $student->id }}</td>
-                                <td class="px-4 py-3 font-medium">{{ $student->full_name }}</td>
-                                <td class="px-4 py-3">{{ $student->level->name ?? '-' }}</td>
-                                <td class="px-4 py-3">{{ $student->branch->name ?? '-' }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="bg-green-100 px-2 py-1 rounded-full text-green-800 text-xs">نشط</span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex space-x-2 space-x-reverse">
-                                        <a href="{{ route('admin.students.show', $student) }}" class="text-blue-600 hover:text-blue-800" title="عرض">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ route('admin.students.edit', $student) }}" class="text-yellow-600 hover:text-yellow-800" title="تعديل">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form action="{{ route('admin.students.destroy', $student) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف الطالب؟');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-800" title="حذف">
+                        @php
+                            $program = \App\Models\Program::find(1);
+                        @endphp
+                        {{-- filepath: resources/views/admin/students/show.blade.php --}}
+                        <tbody id="students-table-body" class="divide-y divide-gray-200">
+                            @php $i = 1; @endphp
+                            @foreach(\App\Models\ProgramInvitation::where('program_id', $program->id)->get() as $invitation)
+                                @php
+                                    $student = \App\Models\Student::find($invitation->student_id);
+                                    $payment = \App\Models\StudentPayment::where('program_invitation_id', $invitation->id)->first();
+                                    // Status mapping
+                                    $statusText = 'غير معروف';
+                                    $statusClass = 'bg-gray-200 text-gray-800';
+                                    if ($invitation->status === 'invited') {
+                                        $statusText = 'مرسل له';
+                                        $statusClass = 'bg-yellow-100 text-yellow-800';
+                                    } elseif ($invitation->status === 'accepted') {
+                                        $statusText = 'مشارك';
+                                        $statusClass = 'bg-green-100 text-green-800';
+                                    } elseif ($invitation->status === 'declined') {
+                                        $statusText = 'غير مشارك';
+                                        $statusClass = 'bg-red-100 text-red-800';
+                                    }
+                                @endphp
+                                <tr class="hover:bg-gray-50" data-status="{{ $invitation->status }}">
+                                    <td class="px-4 py-3">{{ str_pad($i, '0', STR_PAD_LEFT) }}</td>
+                                    <td class="px-4 py-3 font-medium student-name">{{ $student ? $student->full_name : 'غير معروف' }}</td>
+                                    <td class="px-4 py-3">
+                                        <span class="student-status {{ $statusClass }} px-2 py-1 rounded-full text-xs">{{ $statusText }}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        {{ $payment ? number_format($payment->amount, 2) . ' دج' : '-' }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex space-x-2 space-x-reverse">
+                                            <a href="#" class="text-blue-600 hover:text-blue-800" title="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="#" class="text-yellow-600 hover:text-yellow-800" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="#" class="text-red-600 hover:text-red-800" title="حذف">
                                                 <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="6" class="px-4 py-4 text-gray-500 text-center">لا يوجد طلاب مسجلين في السنة الدراسية الحالية.</td>
-                            </tr>
-                            @endforelse
-
-
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @php $i++; @endphp
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
-
+                
                 <!-- Pagination -->
-
                 <div class="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
                     <div class="text-gray-500 text-sm">
-                        عرض <span class="font-medium" id="from-num">1</span> إلى <span class="font-medium" id="to-num">25</span> من <span class="font-medium" id="total-num">{{ $students->count() }}</span> نتائج
+                        عرض <span class="font-medium">1</span> إلى <span class="font-medium">10</span> من <span class="font-medium">{{ $i - 1 }}</span> نتائج
                     </div>
                     <div class="flex space-x-2 space-x-reverse">
-                        <button id="prev-btn" class="px-3 py-1 border border-gray-300 rounded-md text-gray-500 hover:bg-gray-50">
+                        <button class="px-3 py-1 border border-gray-300 rounded-md text-gray-500 hover:bg-gray-50">
                             السابق
                         </button>
-                        <button class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700" id="page-num">
+                        <button class="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                             1
                         </button>
-                        <button id="next-btn" class="px-3 py-1 border border-gray-300 rounded-md text-gray-500 hover:bg-gray-50">
+                        <button class="px-3 py-1 border border-gray-300 rounded-md text-gray-500 hover:bg-gray-50">
                             التالي
                         </button>
                     </div>
-
                 </div>
             </div>
         </main>
     </div>
 
     <!-- Add Student Modal -->
+   <!-- Add Student Modal -->
 <div id="addStudentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
         <div class="flex justify-between items-center border-b border-gray-200 p-4">
@@ -236,122 +267,36 @@
     </div>
 </div>
 
-    <!-- CSV Upload Modal -->
-    <div id="csvModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-            <h3 class="font-bold text-lg mb-4">رفع ملف CSV</h3>
-            <form id="csv-upload-form" action="#" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="mb-4">
-                    <label for="csv_file" class="block text-right text-gray-700 mb-2 font-medium">اختر ملف CSV</label>
-                    <input id="csv_file" name="csv_file" type="file" accept=".csv" required 
-                           class="w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right">
-                </div>
-                
-                <div class="flex justify-between items-center">
-                    <button type="button" onclick="closeCSVModal()" 
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
-                        إلغاء
-                    </button>
-                    <button type="submit" 
-                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
-                        رفع الملف
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Search and filter functionality
             const searchInput = document.getElementById('student-search');
+            const tableBody = document.getElementById('students-table-body');
             const statusFilter = document.getElementById('status-filter');
-            const rows = Array.from(document.querySelectorAll('#students-table-body tr'));
 
-            function filterStudents() {
-                const searchTerm = searchInput.value.toLowerCase();
-                const status = statusFilter.value;
-
-                rows.forEach(row => {
-                    const studentName = row.querySelector('.student-name').textContent.toLowerCase();
-                    const matchesSearch = studentName.includes(searchTerm);
-                    let matchesStatus = true;
-
-                    if (status !== 'all') {
-                        const studentStatus = row.dataset.status;
-                        matchesStatus = (status === 'accepted' && studentStatus === 'مشارك') ||
-                                        (status === 'invited' && studentStatus === 'مرسل له') ||
-                                        (status === 'declined' && studentStatus === 'غير مشارك');
-                    }
-
-                    if (matchesSearch && matchesStatus) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
+            function filterTable() {
+                const searchValue = searchInput.value.trim().toLowerCase();
+                const statusValue = statusFilter.value;
+                Array.from(tableBody.querySelectorAll('tr')).forEach(row => {
+                    const nameCell = row.querySelector('.student-name');
+                    const rowStatus = row.getAttribute('data-status');
+                    if (!nameCell) return;
+                    const name = nameCell.textContent.trim().toLowerCase();
+                    const matchesSearch = name.includes(searchValue);
+                    const matchesStatus = (statusValue === 'all') || (rowStatus === statusValue);
+                    row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
                 });
             }
 
-            searchInput.addEventListener('input', filterStudents);
-            statusFilter.addEventListener('change', filterStudents);
-
-            // Pagination logic
-            const perPage = 25;
-            let currentPage = 1;
-
-            function showPage(page) {
-                const start = (page - 1) * perPage;
-                const end = start + perPage;
-
-                rows.forEach((row, index) => {
-                    if (index >= start && index < end) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                document.getElementById('from-num').textContent = start + 1;
-                document.getElementById('to-num').textContent = Math.min(end, rows.length);
-                document.getElementById('total-num').textContent = rows.length;
-                document.getElementById('page-num').textContent = page;
-
-                document.getElementById('prev-btn').disabled = page === 1;
-                document.getElementById('next-btn').disabled = end >= rows.length;
-            }
-
-            document.getElementById('prev-btn').addEventListener('click', function() {
-                if (currentPage > 1) {
-                    currentPage--;
-                    showPage(currentPage);
-                }
-            });
-            document.getElementById('next-btn').addEventListener('click', function() {
-                if (currentPage * perPage < rows.length) {
-                    currentPage++;
-                    showPage(currentPage);
-                }
-            });
-
-            // Initial display
-            showPage(currentPage);
-
-            // Modals
-            window.openAddStudentModal = function() {
-                document.getElementById('addStudentModal').classList.remove('hidden');
-            }
-            window.closeAddStudentModal = function() {
-                document.getElementById('addStudentModal').classList.add('hidden');
-            }
-            window.openCSVModal = function() {
-                document.getElementById('csvModal').classList.remove('hidden');
-            }
-            window.closeCSVModal = function() {
-                document.getElementById('csvModal').classList.add('hidden');
-            }
+            searchInput.addEventListener('input', filterTable);
+            statusFilter.addEventListener('change', filterTable);
         });
+
+        function openAddStudentModal() {
+            document.getElementById('addStudentModal').classList.remove('hidden');
+        }
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').classList.add('hidden');
+        }
     </script>
 </body>
-
 </html>

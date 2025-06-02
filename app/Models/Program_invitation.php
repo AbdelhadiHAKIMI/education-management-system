@@ -30,9 +30,9 @@ class Program_invitation extends Model
     {
         return $this->belongsTo(Student::class);
     }
-
     public function program()
     {
         return $this->belongsTo(Program::class);
     }
+    
 }

@@ -1,21 +1,18 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+
+
+
 class Program extends Model
 {
     protected $fillable = [
-        'name',
-        'description',
-        'start_date',
-        'end_date',
-        'academic_year_id',
-        'registration_fees',
-        'is_active',
-        'created_by_id',
-        'level_id'
+
+        'name', 'description', 'start_date', 'end_date', 'academic_year_id',
+        'registration_fees', 'is_active', 'created_by_id', 'level_id', 'establishment_id'
+
     ];
 
     public function academicYear()
