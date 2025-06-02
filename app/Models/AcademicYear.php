@@ -14,6 +14,7 @@ class AcademicYear extends Model
       'start_date',
       'end_date',
       'establishment_id',
+      'status', // boolean
    ];
 
    // Relationship: AcademicYear belongs to Establishment
@@ -22,4 +23,3 @@ class AcademicYear extends Model
       return $this->belongsTo(Establishment::class);
    }
 }
-

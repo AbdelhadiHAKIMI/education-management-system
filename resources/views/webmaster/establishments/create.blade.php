@@ -138,6 +138,17 @@
                                 <input type="password" name="admin_password" id="admin_password" class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full" placeholder="كلمة مرور المدير" required>
                             </div>
 
+                            <!-- Education Stages & Levels Selection -->
+                            <div class="md:col-span-2">
+                                <h3 class="mb-4 pb-2 border-gray-200 border-b font-semibold text-gray-800 text-lg">المراحل التعليمية والمستويات</h3>
+                                <div id="education-stages-section">
+                                    <!-- Stages checkboxes will be rendered here -->
+                                </div>
+                                <div id="levels-section" class="mt-4">
+                                    <!-- Levels checkboxes will be rendered here -->
+                                </div>
+                            </div>
+
                             <div class="flex justify-end space-x-3 space-x-reverse md:col-span-2 mt-8 pt-6 border-gray-200 border-t">
                                 <button type="reset" class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-lg text-gray-800">
                                     إلغاء
@@ -163,13 +174,173 @@
                 reader.onload = function(e) {
                     const preview = document.getElementById('logo-preview');
                     const placeholder = document.getElementById('logo-placeholder');
-                    
+
                     preview.src = e.target.result;
                     preview.classList.remove('hidden');
                     placeholder.classList.add('hidden');
                 }
                 reader.readAsDataURL(file);
             }
+        });
+
+        const secondaryBranches = [
+            "شعبة العلوم التجريبية",
+            "شعبة الرياضيات",
+            "شعبة التقني رياضي",
+            "شعبة تسيير واقتصاد",
+            "شعبة آداب وفلسفة",
+            "شعبة لغات أجنبية"
+        ];
+
+        const educationStages = [{
+                name: "تحضيرية ",
+                key: "pre_school",
+                levels: [{
+                        year: 1,
+                        label: "السنة 1: الحضانة (Crèche)"
+                    },
+                    {
+                        year: 2,
+                        label: "السنة 2: التعليم التحضيري (Pré-scolaire)"
+                    }
+                ]
+            },
+            {
+                name: "  إبتدائية",
+                key: "primary",
+                levels: [{
+                        year: 3,
+                        label: "السنة 3: السنة الأولى ابتدائي"
+                    },
+                    {
+                        year: 4,
+                        label: "السنة 4: السنة الثانية ابتدائي"
+                    },
+                    {
+                        year: 5,
+                        label: "السنة 5: السنة الثالثة ابتدائي"
+                    },
+                    {
+                        year: 6,
+                        label: "السنة 6: السنة الرابعة ابتدائي"
+                    },
+                    {
+                        year: 7,
+                        label: "السنة 7: السنة الخامسة ابتدائي"
+                    }
+                ]
+            },
+            {
+                name: "  متوسطة",
+                key: "middle",
+                levels: [{
+                        year: 8,
+                        label: "السنة 8: السنة الأولى متوسط"
+                    },
+                    {
+                        year: 9,
+                        label: "السنة 9: السنة الثانية متوسط"
+                    },
+                    {
+                        year: 10,
+                        label: "السنة 10: السنة الثالثة متوسط"
+                    },
+                    {
+                        year: 11,
+                        label: "السنة 11: السنة الرابعة متوسط (BEM)"
+                    }
+                ]
+            },
+            {
+                name: "  ثانوية",
+                key: "secondary",
+                levels: [{
+                        year: 12,
+                        label: "السنة 12: السنة الأولى ثانوي (جذع مشترك)"
+                    },
+                    {
+                        year: 13,
+                        label: "السنة 13: السنة الثانية ثانوي – اختيار الشعبة",
+                        branches: secondaryBranches
+                    },
+                    {
+                        year: 14,
+                        label: "السنة 14: السنة الثالثة ثانوي (BAC)",
+                        branches: secondaryBranches // <-- add branches here too
+                    }
+                ]
+            }
+        ];
+
+        function renderStages() {
+            const container = document.getElementById('education-stages-section');
+            container.innerHTML = '';
+            educationStages.forEach((stage, idx) => {
+                const id = `stage_${idx}`;
+                container.innerHTML += `
+                    <label class="inline-flex items-center mr-4 mb-2">
+                        <input type="checkbox" class="stage-checkbox" value="${stage.key}" data-idx="${idx}">
+                        <span class="ml-2">${stage.name}</span>
+                    </label>
+                `;
+            });
+        }
+
+        function renderLevels(selectedStages) {
+            const levelsContainer = document.getElementById('levels-section');
+            levelsContainer.innerHTML = '';
+            selectedStages.forEach(idx => {
+                const stage = educationStages[idx];
+                levelsContainer.innerHTML += `<div class="mb-2 font-semibold">${stage.name}</div>`;
+                stage.levels.forEach(level => {
+                    const levelId = `level_${stage.key}_${level.year}`;
+                    levelsContainer.innerHTML += `
+                        <label class="inline-flex items-center mr-4 mb-2">
+                            <input type="checkbox" class="level-checkbox" name="levels[]" value="${level.year}" data-stage="${stage.key}" data-year="${level.year}">
+                            <span class="ml-2">${level.label}</span>
+                        </label>
+                    `;
+                    // If branches exist for this level
+                    if (level.branches) {
+                        levelsContainer.innerHTML += `<div class="mb-2 ml-6 branches-section" id="branches-for-${level.year}" style="display:none;">
+                            <div class="mb-1 font-normal text-sm">اختر الشعبة:</div>
+                            ${level.branches.map((branch, bidx) => `
+                                <label class="inline-flex items-center mr-2 mb-1">
+                                    <input type="checkbox" class="branch-checkbox" name="branches[${level.year}][]" value="${branch}">
+                                    <span class="ml-1">${branch}</span>
+                                </label>
+                            `).join('')}
+                        </div>`;
+                    }
+                });
+            });
+
+            // Add event listeners for levels with branches
+            document.querySelectorAll('.level-checkbox').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const year = this.getAttribute('data-year');
+                    const branchDiv = document.getElementById('branches-for-' + year);
+                    if (branchDiv) {
+                        branchDiv.style.display = this.checked ? 'block' : 'none';
+                        // Uncheck all branches if level is unchecked
+                        if (!this.checked) {
+                            branchDiv.querySelectorAll('input[type=checkbox]').forEach(bcb => bcb.checked = false);
+                        }
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderStages();
+
+            // Handle stage selection
+            document.getElementById('education-stages-section').addEventListener('change', function() {
+                const selectedStages = Array.from(document.querySelectorAll('.stage-checkbox'))
+                    .map((cb, idx) => cb.checked ? parseInt(cb.getAttribute('data-idx')) : null)
+                    .filter(idx => idx !== null);
+                renderLevels(selectedStages);
+            });
         });
     </script>
 </body>

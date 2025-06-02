@@ -22,6 +22,13 @@
         <div class="flex justify-between items-center mx-auto px-4 py-3 container">
             @php
             $user = Auth::user();
+            $establishment = null;
+            $establishmentName = 'اسم المؤسسة غير متوفر';
+            $establishmentLogo = null;
+            $academicYears = [];
+            $activeAcademicYear = null;
+
+            if ($user) {
             // Get the establishment where the user is admin
             $establishment = \App\Models\Establishment::where('id', $user->establishment_id)
             ->when($user->role === 'admin', function ($query) use ($user) {
@@ -32,16 +39,14 @@
             $establishmentLogo = $establishment && $establishment->logo ? asset('storage/' . $establishment->logo) : null;
 
             // Academic years logic
-            use App\Models\AcademicYear;
-            $academicYears = [];
-            $activeAcademicYear = null;
             if ($establishment) {
-            $academicYears = AcademicYear::where('establishment_id', $establishment->id)
+            $academicYears = \App\Models\AcademicYear::where('establishment_id', $establishment->id)
             ->orderByDesc('end_date')
             ->get();
-            $activeAcademicYear = AcademicYear::where('establishment_id', $establishment->id)
-            ->where('status', true)
+            $activeAcademicYear = \App\Models\AcademicYear::where('establishment_id', $establishment->id)
+            ->where('status', 'active')
             ->first();
+            }
             }
             @endphp
             <div class="flex items-center space-x-4 space-x-reverse">
@@ -70,7 +75,8 @@
 
                             <div class="max-h-[280px] overflow-y-auto">
                                 @forelse($academicYears as $year)
-                                <a href="#" class="group flex justify-between items-center hover:bg-gray-50 px-4 py-3 transition-colors duration-150">
+                                <form action="{{ route('academic-years.activate', $year->id) }}" method="POST" class="group flex justify-between items-center hover:bg-gray-50 px-4 py-3 transition-colors duration-150">
+                                    @csrf
                                     <span class="font-medium text-gray-800 text-sm">{{ $year->name }}</span>
                                     @if($year->status)
                                     <span class="inline-flex items-center gap-x-1 bg-green-50 px-2.5 py-1 rounded-full font-medium text-green-700 text-xs">
@@ -78,12 +84,17 @@
                                         نشطة
                                     </span>
                                     @else
-                                    <span class="inline-flex items-center gap-x-1 bg-gray-100 px-2.5 py-1 rounded-full font-medium text-gray-600 text-xs">
+                                    <button type="submit" class="inline-flex items-center gap-x-1 bg-gray-100 hover:bg-indigo-100 px-2.5 py-1 rounded-full font-medium text-gray-600 hover:text-indigo-700 text-xs">
                                         <i class="text-[10px] text-gray-400 fas fa-times-circle"></i>
-                                        منتهية
-                                    </span>
+                                        تفعيل
+                                    </button>
                                     @endif
-                                </a>
+                                </form>
+                                @if($academicYears->where('status', true)->count() > 0 && !$year->status)
+                                <div class="px-4 py-1">
+                                    <small class="text-danger">يجب إلغاء تفعيل السنة الحالية أولاً.</small>
+                                </div>
+                                @endif
                                 @empty
                                 <div class="flex items-center gap-x-2 px-4 py-3 text-gray-500 text-sm">
                                     <i class="text-gray-400 fas fa-info-circle"></i>
@@ -146,12 +157,24 @@
                             <span>المستويات الدراسية</span>
                         </a>
                     </li>
-                    <li>
+                    <li class="group relative">
                         <a href="#" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
                             <i class="fas fa-users"></i>
                             <span>الطلبة</span>
                             <span class="bg-blue-500 px-2 py-1 rounded-full text-white text-xs">324</span>
+                            <i class="ml-1 text-xs fas fa-chevron-down"></i>
                         </a>
+                        <ul class="hidden group-hover:block right-0 z-30 absolute bg-white shadow-lg mt-2 border border-gray-200 rounded-lg min-w-[180px]">
+                            <li>
+                                <a href="{{ route('admin.students.index') }}" class="block hover:bg-gray-100 px-4 py-2 text-gray-700">عرض الطلاب</a>
+                            </li>
+                            <li>
+                                <a href="{{ route('admin.students.create') }}" class="block hover:bg-gray-100 px-4 py-2 text-gray-700">إضافة طالب جديد</a>
+                            </li>
+                            <li>
+                                <a href="{{ route('csv.processor') }}" class="block hover:bg-gray-100 px-4 py-2 text-gray-700">استيراد الطلاب (CSV)</a>
+                            </li>
+                        </ul>
                     </li>
                     <li>
                         <a href="#" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">

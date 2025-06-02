@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,7 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-50">
     <x-admin.navigation />
     <div class="flex">
@@ -77,6 +79,7 @@
                 </div>
             </div>
             
+
             <!-- Students Table -->
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
@@ -88,42 +91,51 @@
                                 <th class="px-4 py-3 font-semibold text-gray-700 text-right">تاريخ الميلاد</th>
                                 <th class="px-4 py-3 font-semibold text-gray-700 text-right">المستوى</th>
                                 <th class="px-4 py-3 font-semibold text-gray-700 text-right">الشعبة</th>
+                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">الحالة</th>
                                 <th class="px-4 py-3 font-semibold text-gray-700 text-right">الإجراءات</th>
                             </tr>
                         </thead>
-                        <tbody id="students-table-body" class="divide-y divide-gray-200">
-                            {{-- $students is now defined above --}}
-                            @foreach($students as $student)
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-3">{{ $student->id }}</td>
-                                    <td class="px-4 py-3 font-medium student-name">{{ $student->full_name }}</td>
-                                    <td class="px-4 py-3">{{ $student->birth_date }}</td>
-                                    <td class="px-4 py-3">
-                                        {{ $student->branch && $student->branch->level ? $student->branch->level->name : '-' }}
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        {{ $student->branch ? $student->branch->name : '-' }}
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex space-x-2 space-x-reverse">
-                                            <a href="#" class="text-blue-600 hover:text-blue-800" title="عرض">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="#" class="text-yellow-600 hover:text-yellow-800" title="تعديل">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="#" class="text-red-600 hover:text-red-800" title="حذف">
+                        <tbody class="divide-y divide-gray-200">
+                            @forelse($students as $student)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3">{{ $student->id }}</td>
+                                <td class="px-4 py-3 font-medium">{{ $student->full_name }}</td>
+                                <td class="px-4 py-3">{{ $student->level->name ?? '-' }}</td>
+                                <td class="px-4 py-3">{{ $student->branch->name ?? '-' }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="bg-green-100 px-2 py-1 rounded-full text-green-800 text-xs">نشط</span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex space-x-2 space-x-reverse">
+                                        <a href="{{ route('admin.students.show', $student) }}" class="text-blue-600 hover:text-blue-800" title="عرض">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.students.edit', $student) }}" class="text-yellow-600 hover:text-yellow-800" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('admin.students.destroy', $student) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف الطالب؟');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-800" title="حذف">
                                                 <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="px-4 py-4 text-gray-500 text-center">لا يوجد طلاب مسجلين في السنة الدراسية الحالية.</td>
+                            </tr>
+                            @endforelse
+
+
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- Pagination -->
+
                 <div class="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
                     <div class="text-gray-500 text-sm">
                         عرض <span class="font-medium" id="from-num">1</span> إلى <span class="font-medium" id="to-num">25</span> من <span class="font-medium" id="total-num">{{ $students->count() }}</span> نتائج
@@ -139,6 +151,7 @@
                             التالي
                         </button>
                     </div>
+
                 </div>
             </div>
         </main>
@@ -340,4 +353,5 @@
         });
     </script>
 </body>
+
 </html>
