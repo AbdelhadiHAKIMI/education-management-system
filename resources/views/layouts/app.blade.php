@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,18 +20,19 @@
             color: #111827;
         }
     </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen">
+
+<body class="bg-gray-100 min-h-screen">
     <div class="min-h-screen">
         @include('layouts.navigation.'.(auth()->check() ? auth()->user()->role : 'guest'))
-
         <!-- Page Heading -->
         @if (isset($header))
-            <header class="bg-white shadow">
-                <div class="mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
-                    {{ $header }}
-                </div>
-            </header>
+        <header class="bg-white shadow">
+            <div class="mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl">
+                {{ $header }}
+            </div>
+        </header>
         @endif
 
         <!-- Page Content -->
@@ -42,4 +44,5 @@
     <!-- Scripts -->
     <script src="{{ asset('js/app.js') }}"></script>
 </body>
+
 </html>

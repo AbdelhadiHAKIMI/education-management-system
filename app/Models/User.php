@@ -48,4 +48,8 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public function establishment()
+    {
+        return $this->belongsTo(\App\Models\Establishment::class);
+    }
 }

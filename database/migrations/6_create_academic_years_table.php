@@ -14,6 +14,7 @@ return new class extends Migration
          $table->date('start_date');
          $table->date('end_date');
          $table->foreignId('establishment_id')->constrained('establishments');
+         $table->boolean('status')->default(false); // <-- change to boolean
          $table->timestamps();
       });
    }

@@ -1,11 +1,16 @@
 <?php
+namespace App\Models;
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+
+
+
 class Program extends Model
 {
+
    protected $fillable = [
       'name',
       'description',
@@ -31,4 +36,5 @@ class Program extends Model
    {
       return $this->belongsTo(Level::class);
    }
+
 }
