@@ -349,6 +349,7 @@ CREATE TABLE `staff` (
   `phone` varchar(20) DEFAULT NULL,
   `bac_year` int(11) DEFAULT NULL,
   `univ_specialty` varchar(50) DEFAULT NULL,
+  `type` varchar(50) DEFAULT NULL,
   `branch_id` bigint(20) unsigned NOT NULL,
   `academic_year_id` bigint(20) unsigned NOT NULL,
   `establishment_id` bigint(20) unsigned NOT NULL,
