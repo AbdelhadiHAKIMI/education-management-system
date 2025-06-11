@@ -32,4 +32,14 @@ class Student extends Model
    {
       return $this->belongsTo(Level::class);
    }
+
+   public function subjectGrades()
+   {
+      return $this->hasMany(\App\Models\SubjectGrade::class, 'student_id');
+   }
+
+   public function examResults()
+   {
+      return $this->hasMany(\App\Models\ExamResult::class, 'student_id');
+   }
 }
