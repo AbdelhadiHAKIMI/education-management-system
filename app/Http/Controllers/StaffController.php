@@ -1,144 +1,236 @@
 <?php
 
-namespace app\Http\Controllers;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Staff;
 use App\Models\Branch;
 use App\Models\AcademicYear;
+use App\Models\Subject;
+use App\Models\Student; // Import Student model
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class StaffController extends Controller
 {
-   public function index(Request $request)
-   {
-      // Get current user's establishment
-      $establishmentId = Auth::user()->establishment_id;
+    public function index(Request $request)
+    {
+        $establishmentId = Auth::user()->establishment_id;
 
-      $query = Staff::with(['branch.level.academicYear'])
-         ->where('establishment_id', $establishmentId)
-         ->latest();
+        $query = Staff::with(['branch.level.academicYear', 'subjects'])
+            ->where('establishment_id', $establishmentId)
+            ->latest();
 
-      // Search filter
-      if ($request->has('search')) {
-         $query->where('full_name', 'like', '%' . $request->search . '%')
-            ->orWhere('phone', 'like', '%' . $request->search . '%');
-      }
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('full_name', 'like', '%' . $search . '%')
+                  ->orWhere('phone', 'like', '%' . $search . '%');
+            });
+        }
 
-      // Branch filter
-      if ($request->has('branch') && $request->branch != '') {
-         $query->where('branch_id', $request->branch);
-      }
+        if ($request->has('branch') && $request->branch != '') {
+            $query->where('branch_id', $request->branch);
+        }
 
-      $staffs = $query->paginate(25);
-      $branches = Branch::whereHas('level.academicYear', function ($q) use ($establishmentId) {
-         $q->where('establishment_id', $establishmentId);
-      })->get();
+        $staffs = $query->paginate(25);
+        $branches = Branch::with('level.academicYear')
+            ->whereHas('level.academicYear', function ($q) use ($establishmentId) {
+                $q->where('establishment_id', $establishmentId);
+            })->get();
 
-      return view('admin.staffs.index', compact('staffs', 'branches'));
-   }
+        // Get counts for sidebar navigation
+        $studentCount = Student::where('establishment_id', $establishmentId)->count();
+        $staffCount = Staff::where('establishment_id', $establishmentId)->count();
 
-   public function create()
-   {
-      $establishmentId = Auth::user()->establishment_id;
-      $branches = Branch::with('level.academicYear')
-         ->whereHas('level.academicYear', function ($q) use ($establishmentId) {
-            $q->where('establishment_id', $establishmentId);
-         })->get();
+        return view('admin.staffs.index', compact('staffs', 'branches', 'studentCount', 'staffCount'));
+    }
 
-      return view('admin.staffs.create', compact('branches'));
-   }
+    public function create()
+    {
+        $establishmentId = Auth::user()->establishment_id;
+        $branches = Branch::with('level.academicYear')
+            ->whereHas('level.academicYear', function ($q) use ($establishmentId) {
+                $q->where('establishment_id', $establishmentId);
+            })->get();
+        $subjects = Subject::all();
 
-   public function store(Request $request)
-   {
-      $validated = $request->validate([
-         'full_name' => 'required|string|max:100',
-         'birth_date' => 'required|date',
-         'phone' => 'nullable|string|max:20',
-         'bac_year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
-         'branch_id' => 'required|exists:branches,id',
-         'univ_specialty' => 'nullable|string|max:50',
-      ]);
+        $staff = new Staff();
+        $staff->setRelation('subjects', collect());
 
-      // Get academic year from branch
-      $branch = Branch::with('level')->findOrFail($request->branch_id);
+        if (!old('type')) {
+            $staff->type = 'إداري';
+        }
 
-      Staff::create([
-         'full_name' => $validated['full_name'],
-         'birth_date' => $validated['birth_date'],
-         'phone' => $validated['phone'],
-         'bac_year' => $validated['bac_year'],
-         'branch_id' => $validated['branch_id'],
-         'univ_specialty' => $validated['univ_specialty'],
-         'academic_year_id' => $branch->level->academic_year_id,
-         'establishment_id' => Auth::user()->establishment_id
-      ]);
+        // Get counts for sidebar navigation
+        $studentCount = Student::where('establishment_id', $establishmentId)->count();
+        $staffCount = Staff::where('establishment_id', $establishmentId)->count();
 
-      return redirect()->route('admin.staffs.index')->with('success', 'تمت إضافة المؤطر بنجاح');
-   }
+        return view('admin.staffs.create', compact('branches', 'staff', 'subjects', 'studentCount', 'staffCount'));
+    }
 
-   public function show(Staff $staff)
-   {
-      // Authorization check
-      if ($staff->establishment_id != Auth::user()->establishment_id) {
-         abort(403);
-      }
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:100',
+            'birth_date' => 'required|date|before_or_equal:' . Carbon::now()->subYears(15)->format('Y-m-d') . '|before_or_equal:today',
+            'phone' => 'nullable|string|max:20',
+            'bac_year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
+            'type' => 'required|in:إداري,مؤطر دراسي,خدمات',
+            'univ_specialty' => 'nullable|string|max:50',
+            'branch_id' => 'nullable|exists:branches,id',
+            'subjects' => 'nullable|array',
+            'subjects.*' => 'exists:subjects,id'
+        ]);
 
-      return view('admin.staffs.show', compact('staff'));
-   }
+        if ($validated['type'] === 'مؤطر دراسي') {
+            $request->validate([
+                'branch_id' => 'required|exists:branches,id',
+                'subjects' => 'nullable|array',
+                'subjects.*' => 'exists:subjects,id'
+            ]);
+        }
 
-   public function edit(Staff $staff)
-   {
-      // Authorization check
-      if ($staff->establishment_id != Auth::user()->establishment_id) {
-         abort(403);
-      }
+        $academicYearId = null;
+        if ($validated['type'] === 'مؤطر دراسي' && isset($validated['branch_id'])) {
+            $branch = Branch::with('level')->find($validated['branch_id']);
+            if ($branch && $branch->level) {
+                $academicYearId = $branch->level->academic_year_id;
+            }
+        } else {
+            $currentAcademicYear = AcademicYear::where('establishment_id', Auth::user()->establishment_id)
+                                                ->where('is_current', true)
+                                                ->first();
+            $academicYearId = $currentAcademicYear ? $currentAcademicYear->id : null;
+        }
 
-      $establishmentId = Auth::user()->establishment_id;
-      $branches = Branch::with('level.academicYear')
-         ->whereHas('academicYear', function ($q) use ($establishmentId) {
-            $q->where('establishment_id', $establishmentId);
-         })->get();
+        $staff = Staff::create([
+            'full_name' => $validated['full_name'],
+            'birth_date' => $validated['birth_date'],
+            'phone' => $validated['phone'],
+            'bac_year' => $validated['bac_year'],
+            'type' => $validated['type'],
+            'branch_id' => ($validated['type'] === 'مؤطر دراسي' && isset($validated['branch_id'])) ? $validated['branch_id'] : null,
+            'univ_specialty' => $validated['univ_specialty'],
+            'academic_year_id' => $academicYearId,
+            'establishment_id' => Auth::user()->establishment_id
+        ]);
 
-      return view('admin.staffs.edit', compact('staff', 'branches'));
-   }
+        if ($validated['type'] === 'مؤطر دراسي' && isset($validated['subjects'])) {
+            $staff->subjects()->sync($validated['subjects']);
+        } else {
+            $staff->subjects()->detach();
+        }
 
-   public function update(Request $request, Staff $staff)
-   {
-      // Authorization check
-      if ($staff->establishment_id != Auth::user()->establishment_id) {
-         abort(403);
-      }
+        return redirect()->route('admin.staffs.index')->with('success', 'تمت إضافة المؤطر بنجاح');
+    }
 
-      $validated = $request->validate([
-         'full_name' => 'required|string|max:100',
-         'birth_date' => 'required|date',
-         'phone' => 'nullable|string|max:20',
-         'bac_year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
-         'branch_id' => 'required|exists:branches,id',
-         'univ_specialty' => 'nullable|string|max:50',
-      ]);
+    public function show(Staff $staff)
+    {
+        if ($staff->establishment_id != Auth::user()->establishment_id) {
+            abort(403);
+        }
+        $staff->load('subjects');
 
-      // Get academic year from branch if changed
-      if ($staff->branch_id != $request->branch_id) {
-         $branch = Branch::with('level')->findOrFail($request->branch_id);
-         $validated['academic_year_id'] = $branch->level->academic_year_id;
-      }
+        // Get counts for sidebar navigation
+        $establishmentId = Auth::user()->establishment_id;
+        $studentCount = Student::where('establishment_id', $establishmentId)->count();
+        $staffCount = Staff::where('establishment_id', $establishmentId)->count();
 
-      $staff->update($validated);
+        return view('admin.staffs.show', compact('staff', 'studentCount', 'staffCount'));
+    }
 
-      return redirect()->route('admin.staffs.index')->with('success', 'تم تحديث بيانات المؤطر بنجاح');
-   }
+    public function edit(Staff $staff)
+    {
+        if ($staff->establishment_id != Auth::user()->establishment_id) {
+            abort(403);
+        }
 
-   public function destroy(Staff $staff)
-   {
-      // Authorization check
-      if ($staff->establishment_id != Auth::user()->establishment_id) {
-         abort(403);
-      }
+        $establishmentId = Auth::user()->establishment_id;
+        $branches = Branch::with('level.academicYear')
+            ->whereHas('level.academicYear', function ($q) use ($establishmentId) {
+                $q->where('establishment_id', $establishmentId);
+            })->get();
+        $subjects = Subject::all();
 
-      $staff->delete();
-      return redirect()->route('admin.staffs.index')->with('success', 'تم حذف المؤطر بنجاح');
-   }
+        $staff->load('subjects');
+
+        // Get counts for sidebar navigation
+        $studentCount = Student::where('establishment_id', $establishmentId)->count();
+        $staffCount = Staff::where('establishment_id', $establishmentId)->count();
+
+        return view('admin.staffs.edit', compact('staff', 'branches', 'subjects', 'studentCount', 'staffCount'));
+    }
+
+    public function update(Request $request, Staff $staff)
+    {
+        if ($staff->establishment_id != Auth::user()->establishment_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'full_name' => 'required|string|max:100',
+            'birth_date' => 'required|date|before_or_equal:' . Carbon::now()->subYears(15)->format('Y-m-d') . '|before_or_equal:today',
+            'phone' => 'nullable|string|max:20',
+            'bac_year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
+            'type' => 'required|in:إداري,مؤطر دراسي,خدمات',
+            'univ_specialty' => 'nullable|string|max:50',
+            'branch_id' => 'nullable|exists:branches,id',
+            'subjects' => 'nullable|array',
+            'subjects.*' => 'exists:subjects,id'
+        ]);
+
+        if ($validated['type'] === 'مؤطر دراسي') {
+            $request->validate([
+                'branch_id' => 'required|exists:branches,id',
+                'subjects' => 'nullable|array',
+                'subjects.*' => 'exists:subjects,id'
+            ]);
+        }
+
+        $academicYearId = $staff->academic_year_id;
+        if ($validated['type'] === 'مؤطر دراسي' && isset($validated['branch_id'])) {
+            $branch = Branch::with('level')->find($validated['branch_id']);
+            if ($branch && $branch->level) {
+                $academicYearId = $branch->level->academic_year_id;
+            }
+        } else {
+            if (is_null($academicYearId)) {
+                $currentAcademicYear = AcademicYear::where('establishment_id', Auth::user()->establishment_id)
+                                                    ->where('is_current', true)
+                                                    ->first();
+                $academicYearId = $currentAcademicYear ? $currentAcademicYear->id : null;
+            }
+        }
+
+        $staff->update([
+            'full_name' => $validated['full_name'],
+            'birth_date' => $validated['birth_date'],
+            'phone' => $validated['phone'],
+            'bac_year' => $validated['bac_year'],
+            'univ_specialty' => $validated['univ_specialty'],
+            'type' => $validated['type'],
+            'branch_id' => ($validated['type'] === 'مؤطر دراسي' && isset($validated['branch_id'])) ? $validated['branch_id'] : null,
+            'academic_year_id' => $academicYearId,
+        ]);
+
+        if ($validated['type'] === 'مؤطر دراسي') {
+            $staff->subjects()->sync($validated['subjects'] ?? []);
+        } else {
+            $staff->subjects()->detach();
+        }
+
+        return redirect()->route('admin.staffs.index')->with('success', 'تم تحديث بيانات المؤطر بنجاح');
+    }
+
+    public function destroy(Staff $staff)
+    {
+        if ($staff->establishment_id != Auth::user()->establishment_id) {
+            abort(403);
+        }
+
+        $staff->delete();
+        return redirect()->route('admin.staffs.index')->with('success', 'تم حذف المؤطر بنجاح');
+    }
 }

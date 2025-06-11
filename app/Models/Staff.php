@@ -11,11 +11,16 @@ class Staff extends Model
       'birth_date',
       'phone',
       'bac_year',
-      'branch_id',
       'univ_specialty',
+      'type',
+      'branch_id',
       'academic_year_id',
-      'establishment_id'
+      'establishment_id',
    ];
+
+   protected $casts = [
+        'birth_date' => 'date', // or 'datetime' if you store time as well
+    ];
 
    public function branch()
    {
@@ -60,5 +65,15 @@ class Staff extends Model
    public function performanceGrants()
    {
       return $this->hasMany(StaffPerformanceGrant::class);
+   }
+
+   public function subject()
+   {
+      return $this->belongsTo(Subject::class);
+   }
+
+   public function subjects()
+   {
+      return $this->belongsToMany(Subject::class, 'teacher_subjects', 'teacher_id', 'subject_id');
    }
 }

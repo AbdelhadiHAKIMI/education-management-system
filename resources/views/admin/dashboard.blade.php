@@ -1,3 +1,4 @@
+=======
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 
@@ -64,7 +65,9 @@
                     <div class="flex justify-between items-center">
                         <div>
                             <p class="text-gray-500">البرامج النشطة</p>
+
                             <h3 class="font-bold text-2xl">{{ \App\Models\Program::where('is_active', true)->count() }}</h3>
+
                         </div>
                         <div class="bg-green-100 p-3 rounded-full">
                             <i class="text-green-600 fas fa-calendar-check"></i>
@@ -96,9 +99,6 @@
                             <p class="text-gray-500">نسبة الحضور</p>
                             <h3 class="font-bold text-2xl">89%</h3>
                         </div>
-                        <div class="bg-purple-100 p-3 rounded-full">
-                            <i class="text-purple-600 fas fa-user-check"></i>
-                        </div>
                     </div>
                     <p class="mt-2 text-green-500 text-sm">
                         <i class="fas fa-arrow-up"></i> 5% عن الأسبوع الماضي
@@ -121,10 +121,6 @@
                             <div>
                                 <span class="text-gray-500 text-sm">تاريخ البدء</span>
                                 <p class="font-medium">{{ \Carbon\Carbon::parse($program->start_date ?? '2023-09-05')->translatedFormat('d F Y') }}</p>
-                            </div>
-                            <div>
-                                <span class="text-gray-500 text-sm">تاريخ الانتهاء</span>
-                                <p class="font-medium">{{ \Carbon\Carbon::parse($program->end_date ?? '2024-05-30')->translatedFormat('d F Y') }}</p>
                             </div>
                             <div>
                                 <span class="text-gray-500 text-sm">الحالة</span>
@@ -197,3 +193,4 @@
 </body>
 
 </html>
+
