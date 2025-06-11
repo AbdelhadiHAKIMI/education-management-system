@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -6,12 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class SubjectGrade extends Model
 {
     protected $fillable = [
-        'exam_result_id', 'subject_id', 'grade'
+        'student_id',
+        'subject_id',
+        'grade',
+        'coefficient'
     ];
 
-    public function examResult()
+    public function student()
     {
-        return $this->belongsTo(ExamResult::class);
+        return $this->belongsTo(Student::class);
     }
 
     public function subject()

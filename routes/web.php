@@ -59,7 +59,7 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
       Route::put('/{establishment}', [EstablishmentController::class, 'update'])
          ->name('webmaster.establishments.update');
 
-        Route::delete('/{establishment}', [EstablishmentController::class, 'destroy'])
+      Route::delete('/{establishment}', [EstablishmentController::class, 'destroy'])
          ->name('webmaster.establishments.destroy');
 
       Route::delete('/remove-admin/{user}', [EstablishmentController::class, 'removeAdmin'])
@@ -86,131 +86,131 @@ Route::get('/', function () {
 
 // Admin Routes
 Route::prefix('admin')->middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        $establishment = session('establishment') ?? (Auth::user()->establishment ?? null);
-        $establishmentId = $establishment->id ?? null;
+   Route::get('/dashboard', function () {
+      $establishment = session('establishment') ?? (Auth::user()->establishment ?? null);
+      $establishmentId = $establishment->id ?? null;
 
-        // Students count for this establishment
-        $studentsCount = \App\Models\Student::whereHas('branch.level.academicYear', function($q) use ($establishmentId) {
+      // Students count for this establishment
+      $studentsCount = \App\Models\Student::whereHas('branch.level.academicYear', function ($q) use ($establishmentId) {
+         $q->where('establishment_id', $establishmentId);
+      })->count();
+
+      // Active programs count for this establishment
+      $programsCount = \App\Models\Program::where('is_active', true)
+         ->where('establishment_id', $establishmentId)
+         ->count();
+
+      // Example: Monthly payments (replace with your real logic)
+
+      $monthlyPayments = 12500;
+      // $monthlyPayments = \App\Models\Payment::whereHas('student.branch.level.academicYear', function($q) use ($establishmentId) {
+      //     $q->where('establishment_id', $establishmentId);
+      // })->whereMonth('created_at', now()->month)->sum('amount');
+
+      // Example: Attendance rate (replace with your real logic)
+      $attendanceRate = 89; // You should calculate this from your attendance table
+
+      // Fetch recent students
+      $recentStudents = \App\Models\Student::whereHas('branch.level.academicYear', function ($q) use ($establishmentId) {
+         $q->where('establishment_id', $establishmentId);
+      })->latest()->take(3)->get();
+
+      // Fetch recent programs
+      $recentPrograms = \App\Models\Program::where('establishment_id', $establishmentId)
+         ->latest()->take(3)->get();
+
+      // Fetch recent payments (replace Payment with your actual model)
+      $recentPayments = [];
+      if (class_exists('\App\Models\Payment')) {
+         $recentPayments = \App\Models\Payment::whereHas('student.branch.level.academicYear', function ($q) use ($establishmentId) {
             $q->where('establishment_id', $establishmentId);
-        })->count();
+         })->latest()->take(3)->get();
+      }
 
-        // Active programs count for this establishment
-        $programsCount = \App\Models\Program::where('is_active', true)
-            ->where('establishment_id', $establishmentId)
-            ->count();
-
-        // Example: Monthly payments (replace with your real logic)
-
-        $monthlyPayments = 12500;
-        // $monthlyPayments = \App\Models\Payment::whereHas('student.branch.level.academicYear', function($q) use ($establishmentId) {
-        //     $q->where('establishment_id', $establishmentId);
-        // })->whereMonth('created_at', now()->month)->sum('amount');
-
-        // Example: Attendance rate (replace with your real logic)
-        $attendanceRate = 89; // You should calculate this from your attendance table
-
-        // Fetch recent students
-        $recentStudents = \App\Models\Student::whereHas('branch.level.academicYear', function($q) use ($establishmentId) {
+      // Fetch recent attendance (replace Attendance with your actual model)
+      $recentAttendance = [];
+      if (class_exists('\App\Models\Attendance')) {
+         $recentAttendance = \App\Models\Attendance::whereHas('student.branch.level.academicYear', function ($q) use ($establishmentId) {
             $q->where('establishment_id', $establishmentId);
-        })->latest()->take(3)->get();
+         })->latest()->take(3)->get();
+      }
 
-        // Fetch recent programs
-        $recentPrograms = \App\Models\Program::where('establishment_id', $establishmentId)
-            ->latest()->take(3)->get();
+      $recentActivities = [];
 
-        // Fetch recent payments (replace Payment with your actual model)
-        $recentPayments = [];
-        if (class_exists('\App\Models\Payment')) {
-            $recentPayments = \App\Models\Payment::whereHas('student.branch.level.academicYear', function($q) use ($establishmentId) {
-                $q->where('establishment_id', $establishmentId);
-            })->latest()->take(3)->get();
-        }
+      foreach ($recentPrograms as $program) {
+         $recentActivities[] = [
+            'icon' => 'fas fa-calendar-plus',
+            'icon_bg' => 'bg-indigo-100',
+            'icon_color' => 'text-indigo-600',
+            'title' => 'تم إنشاء برنامج جديد: ' . $program->name,
+            'desc' => 'الفترة: ' . \Carbon\Carbon::parse($program->start_date)->format('d/m/Y') . ' - ' . \Carbon\Carbon::parse($program->end_date)->format('d/m/Y'),
+            'time' => $program->created_at ? $program->created_at->diffForHumans() : '',
+         ];
+      }
 
-        // Fetch recent attendance (replace Attendance with your actual model)
-        $recentAttendance = [];
-        if (class_exists('\App\Models\Attendance')) {
-            $recentAttendance = \App\Models\Attendance::whereHas('student.branch.level.academicYear', function($q) use ($establishmentId) {
-                $q->where('establishment_id', $establishmentId);
-            })->latest()->take(3)->get();
-        }
+      foreach ($recentStudents as $student) {
+         $recentActivities[] = [
+            'icon' => 'fas fa-user-plus',
+            'icon_bg' => 'bg-blue-100',
+            'icon_color' => 'text-blue-600',
+            'title' => 'تم تسجيل طالب جديد: ' . $student->full_name,
+            'desc' => 'المستوى: ' . ($student->branch->level->name ?? '-') . '، الشعبة: ' . ($student->branch->name ?? '-'),
+            'time' => $student->created_at ? $student->created_at->diffForHumans() : '',
+         ];
+      }
 
-        $recentActivities = [];
+      foreach ($recentPayments as $payment) {
+         $recentActivities[] = [
+            'icon' => 'fas fa-money-bill-wave',
+            'icon_bg' => 'bg-green-100',
+            'icon_color' => 'text-green-600',
+            'title' => 'تم تسديد دفعة',
+            'desc' => 'المبلغ: ' . number_format($payment->amount, 0, '.', ',') . ' د.ج بواسطة ' . ($payment->student->full_name ?? ''),
+            'time' => $payment->created_at ? $payment->created_at->diffForHumans() : '',
+         ];
+      }
 
-        foreach ($recentPrograms as $program) {
-            $recentActivities[] = [
-                'icon' => 'fas fa-calendar-plus',
-                'icon_bg' => 'bg-indigo-100',
-                'icon_color' => 'text-indigo-600',
-                'title' => 'تم إنشاء برنامج جديد: ' . $program->name,
-                'desc' => 'الفترة: ' . \Carbon\Carbon::parse($program->start_date)->format('d/m/Y') . ' - ' . \Carbon\Carbon::parse($program->end_date)->format('d/m/Y'),
-                'time' => $program->created_at ? $program->created_at->diffForHumans() : '',
-            ];
-        }
+      foreach ($recentAttendance as $attendance) {
+         $recentActivities[] = [
+            'icon' => 'fas fa-user-check',
+            'icon_bg' => 'bg-purple-100',
+            'icon_color' => 'text-purple-600',
+            'title' => 'تسجيل حضور',
+            'desc' => 'الطالب: ' . ($attendance->student->full_name ?? '') . '، الحالة: ' . ($attendance->status ?? ''),
+            'time' => $attendance->created_at ? $attendance->created_at->diffForHumans() : '',
+         ];
+      }
 
-        foreach ($recentStudents as $student) {
-            $recentActivities[] = [
-                'icon' => 'fas fa-user-plus',
-                'icon_bg' => 'bg-blue-100',
-                'icon_color' => 'text-blue-600',
-                'title' => 'تم تسجيل طالب جديد: ' . $student->full_name,
-                'desc' => 'المستوى: ' . ($student->branch->level->name ?? '-') . '، الشعبة: ' . ($student->branch->name ?? '-'),
-                'time' => $student->created_at ? $student->created_at->diffForHumans() : '',
-            ];
-        }
+      // Sort all activities by time (most recent first)
+      usort($recentActivities, function ($a, $b) {
+         return strtotime($b['time']) <=> strtotime($a['time']);
+      });
 
-        foreach ($recentPayments as $payment) {
-            $recentActivities[] = [
-                'icon' => 'fas fa-money-bill-wave',
-                'icon_bg' => 'bg-green-100',
-                'icon_color' => 'text-green-600',
-                'title' => 'تم تسديد دفعة',
-                'desc' => 'المبلغ: ' . number_format($payment->amount, 0, '.', ',') . ' د.ج بواسطة ' . ($payment->student->full_name ?? ''),
-                'time' => $payment->created_at ? $payment->created_at->diffForHumans() : '',
-            ];
-        }
+      return view('admin.dashboard', compact(
+         'establishment',
+         'recentActivities',
+         'studentsCount',
+         'programsCount',
+         'monthlyPayments',
+         'attendanceRate'
+      ));
+   })->name('admin.dashboard');
 
-        foreach ($recentAttendance as $attendance) {
-            $recentActivities[] = [
-                'icon' => 'fas fa-user-check',
-                'icon_bg' => 'bg-purple-100',
-                'icon_color' => 'text-purple-600',
-                'title' => 'تسجيل حضور',
-                'desc' => 'الطالب: ' . ($attendance->student->full_name ?? '') . '، الحالة: ' . ($attendance->status ?? ''),
-                'time' => $attendance->created_at ? $attendance->created_at->diffForHumans() : '',
-            ];
-        }
-
-        // Sort all activities by time (most recent first)
-        usort($recentActivities, function($a, $b) {
-            return strtotime($b['time']) <=> strtotime($a['time']);
-        });
-
-        return view('admin.dashboard', compact(
-            'establishment',
-            'recentActivities',
-            'studentsCount',
-            'programsCount',
-            'monthlyPayments',
-            'attendanceRate'
-        ));
-    })->name('admin.dashboard');
-
-    // Programs Routes
-    Route::get('/programs/index', [ProgramController::class, 'index'])->name('admin.programs.index');
-    Route::get('/programs/create', [ProgramController::class, 'create'])->name('admin.programs.create');
-    Route::post('/programs/store', [ProgramController::class, 'store'])->name('admin.programs.store');
-    Route::get('/programs/edit', [ProgramController::class, 'edit'])->name('admin.programs.edit');
-    Route::get('/programs/show', [ProgramController::class, 'show'])->name('admin.programs.show');
-    Route::get('/programs/attendance', [ProgramController::class, 'attendance'])->name('admin.programs.attendance');
+   // Programs Routes
+   Route::get('/programs/index', [ProgramController::class, 'index'])->name('admin.programs.index');
+   Route::get('/programs/create', [ProgramController::class, 'create'])->name('admin.programs.create');
+   Route::post('/programs/store', [ProgramController::class, 'store'])->name('admin.programs.store');
+   Route::get('/programs/edit', [ProgramController::class, 'edit'])->name('admin.programs.edit');
+   Route::get('/programs/show', [ProgramController::class, 'show'])->name('admin.programs.show');
+   Route::get('/programs/attendance', [ProgramController::class, 'attendance'])->name('admin.programs.attendance');
 
 
-    // Students Routes
-    Route::get('/students/index', [StudentController::class, 'index'])->name('admin.students.index');
-    Route::get('/students/create', [StudentController::class, 'create'])->name('admin.students.create');
-    Route::get('/students/edit', [StudentController::class, 'edit'])->name('admin.students.edit');
-    Route::get('/students/show', [StudentController::class, 'show'])->name('admin.students.show');
-    Route::post('/store', [AddStudentController::class, 'store'])->name('students.store');
+   // Students Routes
+   Route::get('/students/index', [StudentController::class, 'index'])->name('admin.students.index');
+   Route::get('/students/create', [StudentController::class, 'create'])->name('admin.students.create');
+   Route::get('/students/edit', [StudentController::class, 'edit'])->name('admin.students.edit');
+   Route::get('/students/show', [StudentController::class, 'show'])->name('admin.students.show');
+   Route::post('/store', [AddStudentController::class, 'store'])->name('students.store');
 });
 
 
@@ -219,9 +219,9 @@ Route::get('/admin/dashboard', function () {
 })->name('admin.dashboard');
 
 
-Route::get('/admin/programs/create', function () {
-   return view('/admin/programs/create');
-});
+// Route::get('/admin/programs/create', function () {
+//    return view('/admin/programs/create');
+// });
 
 Route::prefix('admin/staffs')->middleware(['auth'])->group(function () {
    Route::get('/', [StaffController::class, 'index'])->name('admin.staffs.index');
@@ -232,9 +232,9 @@ Route::prefix('admin/staffs')->middleware(['auth'])->group(function () {
    Route::put('/{staff}', [StaffController::class, 'update'])->name('admin.staffs.update');
    Route::delete('/{staff}', [StaffController::class, 'destroy'])->name('admin.staffs.destroy');
 });
-Route::get('/admin/programs/index', function () {
-   return view('/admin/programs/index');
-});
+// Route::get('/admin/programs/index', function () {
+//    return view('/admin/programs/index');
+// });
 
 Route::get('/csv-processor', [CsvProcessorController::class, 'index'])->name('csv.processor');
 Route::post('/csv-processor/upload', [CsvProcessorController::class, 'upload'])->name('csv.upload');
@@ -261,7 +261,8 @@ Route::get('/admin/exam-results/prototype', [\App\Http\Controllers\Admin\Program
 
 Route::get('/exam-results/prototype', [\App\Http\Controllers\Admin\ProgramInvitationController::class, 'examResultsPrototype']);
 
-Route::get('/exam-results/prototype-form', [ExamResultController::class, 'prototypeForm'])->name('exam_results.prototype.form');
+// Exam Results Prototype Page (UI for download/upload)
+Route::get('/exam-results/prototype-form', [\App\Http\Controllers\ExamResultController::class, 'prototypeForm'])->name('exam_results.prototype.form');
 Route::get('/exam-results/prototype-download', [ExamResultController::class, 'prototypeDownload'])->name('exam_results.prototype.download');
 Route::post('/exam-results/import', [ExamResultController::class, 'importResults'])->name('exam_results.import');
 Route::get('/exam-results/reset', [ExamResultController::class, 'resetSelection'])->name('exam_results.prototype.reset');
@@ -272,6 +273,7 @@ Route::get('/admin/levels/dashboard', function () {
 })->name('admin.levels.dashboard');
 
 Route::prefix('admin/levels')->middleware(['auth'])->group(function () {
+   Route::get('/', [LevelController::class, 'index'])->name('admin.levels.index');
    Route::get('/dashboard', [LevelController::class, 'index'])->name('admin.levels.dashboard');
    Route::post('/', [LevelController::class, 'store'])->name('admin.levels.store');
    Route::put('/{level}', [LevelController::class, 'update'])->name('admin.levels.update');
@@ -291,5 +293,10 @@ Route::prefix('admin/students')->middleware(['auth'])->group(function () {
    Route::get('/{student}/edit', [\App\Http\Controllers\Admin\StudentController::class, 'edit'])->name('admin.students.edit');
    Route::put('/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'update'])->name('admin.students.update');
    Route::delete('/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'destroy'])->name('admin.students.destroy');
+   Route::post('/import', [\App\Http\Controllers\Admin\StudentController::class, 'import'])->name('admin.students.import');
 });
 
+// Add this route for subject creation in admin panel
+Route::post('/admin/subjects/store', [\App\Http\Controllers\Admin\SubjectController::class, 'store'])->name('admin.subjects.store');
+
+Route::get('/exam-results/dashboard', [\App\Http\Controllers\ExamResultController::class, 'dashboard'])->name('exam_results.dashboard');
