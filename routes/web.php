@@ -15,9 +15,8 @@ use App\Http\Controllers\ProgramInvitationImportController;
 use App\Http\Controllers\Admin\ProgramInvitationController;
 use App\Http\Controllers\ExamResultController;
 use App\Http\Controllers\StaffController;
-use App\Models\Branch; 
-use App\Models\Subject; 
-use Illuminate\Support\Facades\Auth; 
+use App\Models\Branch;
+use App\Models\Subject;
 use App\Http\Controllers\Admin\LevelController;
 use App\Http\Controllers\AcademicYearController;
 
@@ -31,11 +30,11 @@ Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('regi
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::get('/forgot-password', function () {
-    return view('auth.forgot-password');
+   return view('auth.forgot-password');
 })->name('password.request');
 
 Route::get('/reset-password/{token}', function ($token) {
-    return view('auth.reset-password', ['token' => $token]);
+   return view('auth.reset-password', ['token' => $token]);
 })->name('password.reset');
 
 // Webmaster Routes
@@ -47,21 +46,21 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
       Route::get('/', [EstablishmentController::class, 'index'])
          ->name('webmaster.establishments.index');
 
-        Route::get('/create', function () {
-            return view('webmaster.establishments.create');
-        })->name('webmaster.establishments.create');
+      Route::get('/create', function () {
+         return view('webmaster.establishments.create');
+      })->name('webmaster.establishments.create');
 
-        Route::post('/store', [EstablishmentController::class, 'store'])
-            ->name('webmaster.establishments.store');
+      Route::post('/store', [EstablishmentController::class, 'store'])
+         ->name('webmaster.establishments.store');
 
       Route::get('/{establishment}/edit', [EstablishmentController::class, 'edit'])
          ->name('webmaster.establishments.edit');
 
-        Route::get('/{establishment}', [EstablishmentController::class, 'show'])
-            ->name('webmaster.establishments.show');
+      Route::get('/{establishment}', [EstablishmentController::class, 'show'])
+         ->name('webmaster.establishments.show');
 
-        Route::put('/{establishment}', [EstablishmentController::class, 'update'])
-            ->name('webmaster.establishments.update');
+      Route::put('/{establishment}', [EstablishmentController::class, 'update'])
+         ->name('webmaster.establishments.update');
 
       Route::delete('/{establishment}', [EstablishmentController::class, 'destroy'])
          ->name('webmaster.establishments.destroy');
@@ -73,7 +72,7 @@ Route::prefix('webmaster')->middleware(['auth'])->group(function () {
 
 // Home Route
 Route::get('/', function () {
-    return redirect()->route('login');
+   return redirect()->route('login');
 });
 
 
@@ -92,52 +91,31 @@ Route::get('/', function () {
 Route::prefix('admin')->middleware(['auth'])->group(function () {
    Route::get('/dashboard', function () {
       $establishment = session('establishment') ?? (Auth::user()->establishment ?? null);
-      $establishmentId = $establishment->id ?? null;
+      // $establishmentId = $establishment->id ?? null; // No longer needed for programs
 
-      // Students count for this establishment
-      $studentsCount = \App\Models\Student::whereHas('branch.level.academicYear', function ($q) use ($establishmentId) {
-         $q->where('establishment_id', $establishmentId);
-      })->count();
+      // FIX: Remove establishment_id filter from programs query
+      $studentsCount = \App\Models\Student::count();
 
-      // Active programs count for this establishment
-      $programsCount = \App\Models\Program::where('is_active', true)
-         ->where('establishment_id', $establishmentId)
-         ->count();
+      // Active programs count (no establishment_id filter)
+      $programsCount = \App\Models\Program::where('is_active', true)->count();
 
       // Example: Monthly payments (replace with your real logic)
-
       $monthlyPayments = 12500;
-      // $monthlyPayments = \App\Models\Payment::whereHas('student.branch.level.academicYear', function($q) use ($establishmentId) {
-      //     $q->where('establishment_id', $establishmentId);
-      // })->whereMonth('created_at', now()->month)->sum('amount');
 
       // Example: Attendance rate (replace with your real logic)
       $attendanceRate = 89; // You should calculate this from your attendance table
 
       // Fetch recent students
-      $recentStudents = \App\Models\Student::whereHas('branch.level.academicYear', function ($q) use ($establishmentId) {
-         $q->where('establishment_id', $establishmentId);
-      })->latest()->take(3)->get();
+      $recentStudents = \App\Models\Student::latest()->take(3)->get();
 
-      // Fetch recent programs
-      $recentPrograms = \App\Models\Program::where('establishment_id', $establishmentId)
-         ->latest()->take(3)->get();
+      // Fetch recent programs (no establishment_id filter)
+      $recentPrograms = \App\Models\Program::latest()->take(3)->get();
 
-      // Fetch recent payments (replace Payment with your actual model)
+      // Remove recentPayments section (no payments table)
       $recentPayments = [];
-      if (class_exists('\App\Models\Payment')) {
-         $recentPayments = \App\Models\Payment::whereHas('student.branch.level.academicYear', function ($q) use ($establishmentId) {
-            $q->where('establishment_id', $establishmentId);
-         })->latest()->take(3)->get();
-      }
 
-      // Fetch recent attendance (replace Attendance with your actual model)
+      // Remove recentAttendance section (no attendances table)
       $recentAttendance = [];
-      if (class_exists('\App\Models\Attendance')) {
-         $recentAttendance = \App\Models\Attendance::whereHas('student.branch.level.academicYear', function ($q) use ($establishmentId) {
-            $q->where('establishment_id', $establishmentId);
-         })->latest()->take(3)->get();
-      }
 
       $recentActivities = [];
 
@@ -158,32 +136,13 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
             'icon_bg' => 'bg-blue-100',
             'icon_color' => 'text-blue-600',
             'title' => 'تم تسجيل طالب جديد: ' . $student->full_name,
-            'desc' => 'المستوى: ' . ($student->branch->level->name ?? '-') . '، الشعبة: ' . ($student->branch->name ?? '-'),
+            'desc' => 'الشعبة: ' . ($student->branch->name ?? '-'),
             'time' => $student->created_at ? $student->created_at->diffForHumans() : '',
          ];
       }
 
-      foreach ($recentPayments as $payment) {
-         $recentActivities[] = [
-            'icon' => 'fas fa-money-bill-wave',
-            'icon_bg' => 'bg-green-100',
-            'icon_color' => 'text-green-600',
-            'title' => 'تم تسديد دفعة',
-            'desc' => 'المبلغ: ' . number_format($payment->amount, 0, '.', ',') . ' د.ج بواسطة ' . ($payment->student->full_name ?? ''),
-            'time' => $payment->created_at ? $payment->created_at->diffForHumans() : '',
-         ];
-      }
-
-      foreach ($recentAttendance as $attendance) {
-         $recentActivities[] = [
-            'icon' => 'fas fa-user-check',
-            'icon_bg' => 'bg-purple-100',
-            'icon_color' => 'text-purple-600',
-            'title' => 'تسجيل حضور',
-            'desc' => 'الطالب: ' . ($attendance->student->full_name ?? '') . '، الحالة: ' . ($attendance->status ?? ''),
-            'time' => $attendance->created_at ? $attendance->created_at->diffForHumans() : '',
-         ];
-      }
+      // Remove recentPayments loop (no payments table)
+      // Remove recentAttendance loop (no attendances table)
 
       // Sort all activities by time (most recent first)
       usort($recentActivities, function ($a, $b) {
@@ -220,7 +179,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
 
 // ADMIN PROGRAMS ROUTES - KEPT AS IS FOR NOW
 Route::get('/admin/program/create', function () {
-    return view('/admin/programs/create');
+   return view('/admin/programs/create');
 });
 
 
@@ -248,43 +207,42 @@ Route::prefix('admin/staffs')->middleware(['auth'])->group(function () {
 // This ensures that the StaffController methods are correctly mapped to URLs like /admin/staffs, /admin/staffs/create, etc.
 Route::prefix('admin')->middleware(['auth'])->group(function () {
 
-    // Define the resource routes for staff. This single line correctly generates:
-    // GET      /admin/staffs           -> StaffController@index  (admin.staffs.index)
-    // GET      /admin/staffs/create    -> StaffController@create (admin.staffs.create)
-    // POST     /admin/staffs           -> StaffController@store  (admin.staffs.store)
-    // GET      /admin/staffs/{staff}   -> StaffController@show   (admin.staffs.show)
-    // GET      /admin/staffs/{staff}/edit -> StaffController@edit (admin.staffs.edit)
-    // PUT/PATCH /admin/staffs/{staff}  -> StaffController@update (admin.staffs.update)
-    // DELETE   /admin/staffs/{staff}   -> StaffController@destroy (admin.staffs.destroy)
-    Route::resource('staffs', StaffController::class)->names('admin.staffs');
+   // Define the resource routes for staff. This single line correctly generates:
+   // GET      /admin/staffs           -> StaffController@index  (admin.staffs.index)
+   // GET      /admin/staffs/create    -> StaffController@create (admin.staffs.create)
+   // POST     /admin/staffs           -> StaffController@store  (admin.staffs.store)
+   // GET      /admin/staffs/{staff}   -> StaffController@show   (admin.staffs.show)
+   // GET      /admin/staffs/{staff}/edit -> StaffController@edit (admin.staffs.edit)
+   // PUT/PATCH /admin/staffs/{staff}  -> StaffController@update (admin.staffs.update)
+   // DELETE   /admin/staffs/{staff}   -> StaffController@destroy (admin.staffs.destroy)
+   Route::resource('staffs', StaffController::class)->names('admin.staffs');
 
-    // API endpoint for fetching subjects by branch, now correctly placed
-    // This route needs to be inside the 'admin' prefix so its URL is /admin/branches/{branch}/subjects
-    // and it's protected by the 'auth' middleware.
-    Route::get('/branches/{branch}/subjects', function(Branch $branch) {
-        // Authorization check: Ensure the branch belongs to the user's establishment
-        if (Auth::check() && $branch->level->academicYear->establishment_id !== Auth::user()->establishment_id) {
-            abort(403, 'Unauthorized access to branch subjects.');
-        }
-        return $branch->subjects()->get(['id', 'name']); // Return only ID and name for efficiency
-    })->name('admin.branches.subjects');
-
+   // API endpoint for fetching subjects by branch, now correctly placed
+   // This route needs to be inside the 'admin' prefix so its URL is /admin/branches/{branch}/subjects
+   // and it's protected by the 'auth' middleware.
+   Route::get('/branches/{branch}/subjects', function (Branch $branch) {
+      // Authorization check: Ensure the branch belongs to the user's establishment
+      if (Auth::check() && $branch->level->academicYear->establishment_id !== Auth::user()->establishment_id) {
+         abort(403, 'Unauthorized access to branch subjects.');
+      }
+      return $branch->subjects()->get(['id', 'name']); // Return only ID and name for efficiency
+   })->name('admin.branches.subjects');
 });
 // **END FIXED STAFF ROUTES**
 
 
 // CSV Processor Routes (ensure these are correctly permissioned/middleware protected)
 Route::prefix('csv-processor')->middleware(['auth'])->group(function () { // Added middleware for security
-    Route::get('/', [CsvProcessorController::class, 'index'])->name('csv.processor');
-    Route::post('/upload', [CsvProcessorController::class, 'upload'])->name('csv.upload');
-    Route::post('/filter', [CsvProcessorController::class, 'filter'])->name('csv.filter');
-    Route::post('/generate', [CsvProcessorController::class, 'generate'])->name('csv.generate');
-    Route::get('/download', [CsvProcessorController::class, 'download'])->name('csv.download');
-    Route::get('/show', [CsvProcessorController::class, 'show'])->name('csv.show');
-    Route::get('/prototype', [CsvProcessorController::class, 'prototype'])->name('csv.prototype');
-    Route::get('/prototype-xlsx', [CsvProcessorController::class, 'prototypeXlsx'])->name('csv.prototype.xlsx');
+   Route::get('/', [CsvProcessorController::class, 'index'])->name('csv.processor');
+   Route::post('/upload', [CsvProcessorController::class, 'upload'])->name('csv.upload');
+   Route::post('/filter', [CsvProcessorController::class, 'filter'])->name('csv.filter');
+   Route::post('/generate', [CsvProcessorController::class, 'generate'])->name('csv.generate');
+   Route::get('/download', [CsvProcessorController::class, 'download'])->name('csv.download');
+   Route::get('/show', [CsvProcessorController::class, 'show'])->name('csv.show');
+   Route::get('/prototype', [CsvProcessorController::class, 'prototype'])->name('csv.prototype');
+   Route::get('/prototype-xlsx', [CsvProcessorController::class, 'prototypeXlsx'])->name('csv.prototype.xlsx');
 });
-=======
+
 Route::get('/csv-processor', [CsvProcessorController::class, 'index'])->name('csv.processor');
 Route::post('/csv-processor/upload', [CsvProcessorController::class, 'upload'])->name('csv.upload');
 Route::post('/csv-processor/filter', [CsvProcessorController::class, 'filter'])->name('csv.filter');

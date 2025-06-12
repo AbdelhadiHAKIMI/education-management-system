@@ -114,30 +114,24 @@
                     <td colspan="7" class="px-4 py-4 text-gray-500 text-center">لا يوجد طلاب مسجلين في السنة الدراسية الحالية.</td>
                 </tr>
                 @endforelse
-
-
             </tbody>
         </table>
     </div>
 
     <!-- Pagination -->
-
     <div class="flex justify-between items-center px-6 py-4 border-gray-200 border-t">
         <div class="text-gray-500 text-sm">
-            عرض <span class="font-medium" id="from-num">1</span> إلى <span class="font-medium" id="to-num">25</span> من <span class="font-medium" id="total-num">{{ $students->count() }}</span> نتائج
+            عرض
+            <span class="font-medium">{{ $students->firstItem() ?? 0 }}</span>
+            إلى
+            <span class="font-medium">{{ $students->lastItem() ?? 0 }}</span>
+            من
+            <span class="font-medium">{{ $students->total() }}</span>
+            نتائج
         </div>
-        <div class="flex space-x-2 space-x-reverse">
-            <button id="prev-btn" class="hover:bg-gray-50 px-3 py-1 border border-gray-300 rounded-md text-gray-500">
-                السابق
-            </button>
-            <button class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md text-white" id="page-num">
-                1
-            </button>
-            <button id="next-btn" class="hover:bg-gray-50 px-3 py-1 border border-gray-300 rounded-md text-gray-500">
-                التالي
-            </button>
+        <div>
+            {{ $students->links() }}
         </div>
-
     </div>
 </div>
 
@@ -220,18 +214,26 @@
     </div>
 </div>
 
-<!-- CSV Upload Modal -->
+<!-- CSV Upload Modal (Popup) -->
 <div id="csvModal" class="hidden z-50 fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 p-4">
     <div class="bg-white shadow-xl p-6 rounded-lg w-full max-w-md">
         <h3 class="mb-4 font-bold text-lg">رفع ملف CSV</h3>
-        <form id="csv-upload-form" action="#" method="POST" enctype="multipart/form-data">
+        <form id="csv-upload-form" action="{{ route('csv.upload') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="mb-4">
                 <label for="csv_file" class="block mb-2 font-medium text-gray-700 text-right">اختر ملف CSV</label>
-                <input id="csv_file" name="csv_file" type="file" accept=".csv" required
+                <input id="csv_file" name="csv_file" type="file" accept=".csv,.xlsx" required
                     class="border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full text-right">
             </div>
-
+            <div class="mb-4">
+                <label for="level_id" class="block mb-2 font-medium text-gray-700 text-right">المستوى الدراسي</label>
+                <select id="level_id" name="level_id" class="border border-gray-300 rounded-lg w-full" required>
+                    <option value="">اختر المستوى</option>
+                    @foreach(\App\Models\Level::all() as $level)
+                    <option value="{{ $level->id }}">{{ $level->name }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="flex justify-between items-center">
                 <button type="button" onclick="closeCSVModal()"
                     class="hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700">
@@ -280,47 +282,6 @@
         searchInput.addEventListener('input', filterStudents);
         statusFilter.addEventListener('change', filterStudents);
 
-        // Pagination logic
-        const perPage = 25;
-        let currentPage = 1;
-
-        function showPage(page) {
-            const start = (page - 1) * perPage;
-            const end = start + perPage;
-
-            rows.forEach((row, index) => {
-                if (index >= start && index < end) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            document.getElementById('from-num').textContent = start + 1;
-            document.getElementById('to-num').textContent = Math.min(end, rows.length);
-            document.getElementById('total-num').textContent = rows.length;
-            document.getElementById('page-num').textContent = page;
-
-            document.getElementById('prev-btn').disabled = page === 1;
-            document.getElementById('next-btn').disabled = end >= rows.length;
-        }
-
-        document.getElementById('prev-btn').addEventListener('click', function() {
-            if (currentPage > 1) {
-                currentPage--;
-                showPage(currentPage);
-            }
-        });
-        document.getElementById('next-btn').addEventListener('click', function() {
-            if (currentPage * perPage < rows.length) {
-                currentPage++;
-                showPage(currentPage);
-            }
-        });
-
-        // Initial display
-        showPage(currentPage);
-
         // Modals
         window.openAddStudentModal = function() {
             document.getElementById('addStudentModal').classList.remove('hidden');
@@ -328,6 +289,8 @@
         window.closeAddStudentModal = function() {
             document.getElementById('addStudentModal').classList.add('hidden');
         }
+
+        // CSV Modal logic
         window.openCSVModal = function() {
             document.getElementById('csvModal').classList.remove('hidden');
         }
