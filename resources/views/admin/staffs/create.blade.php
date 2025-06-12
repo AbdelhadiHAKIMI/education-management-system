@@ -133,9 +133,9 @@
         </aside>
 
         <main class="flex-1 p-8">
-            <div class="bg-white shadow-md p-6 rounded-lg max-w-3xl mx-auto">
+            <div class="bg-white shadow-md mx-auto p-6 rounded-lg max-w-3xl">
                 <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-2xl font-bold text-gray-800">
+                    <h1 class="font-bold text-gray-800 text-2xl">
                         {{ isset($staff) && $staff->exists ? 'تعديل بيانات المؤطر' : 'إضافة مؤطر جديد' }}
                     </h1>
                     <a href="{{ route('admin.staffs.index') }}" class="text-blue-600 hover:underline">العودة
@@ -149,33 +149,33 @@
                         @method('PUT')
                     @endif
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
                         <div>
-                            <label for="full_name" class="block text-gray-700 mb-2">الاسم الكامل *</label>
+                            <label for="full_name" class="block mb-2 text-gray-700">الاسم الكامل *</label>
                             <input type="text" id="full_name" name="full_name"
                                 value="{{ old('full_name', $staff->full_name ?? '') }}"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full"
                                 required>
                             @error('full_name')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div>
-                            <label for="birth_date" class="block text-gray-700 mb-2">تاريخ الميلاد *</label>
+                            <label for="birth_date" class="block mb-2 text-gray-700">تاريخ الميلاد *</label>
                             <input type="date" id="birth_date" name="birth_date"
                                 value="{{ old('birth_date', optional($staff->birth_date)->format('Y-m-d') ?? '') }}"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full"
                                 required>
                             @error('birth_date')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div>
-                            <label for="type" class="block text-gray-700 mb-2">نوع الموظف *</label>
+                            <label for="type" class="block mb-2 text-gray-700">نوع الموظف *</label>
                             <select id="type" name="type"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full"
                                 required>
                                 <option value="">اختر النوع</option>
                                 <option value="إداري" @selected(old('type', $staff->type ?? '') == 'إداري')>إداري</option>
@@ -183,44 +183,44 @@
                                 <option value="خدمات" @selected(old('type', $staff->type ?? '') == 'خدمات')>خدمات</option>
                             </select>
                             @error('type')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div>
-                            <label for="phone" class="block text-gray-700 mb-2">رقم الهاتف</label>
+                            <label for="phone" class="block mb-2 text-gray-700">رقم الهاتف</label>
                             <input type="tel" id="phone" name="phone"
                                 value="{{ old('phone', $staff->phone ?? '') }}"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full">
                             @error('phone')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div>
-                            <label for="bac_year" class="block text-gray-700 mb-2">سنة البكالوريا</label>
+                            <label for="bac_year" class="block mb-2 text-gray-700">سنة البكالوريا</label>
                             <input type="number" id="bac_year" name="bac_year" min="1900"
                                 max="{{ date('Y') + 1 }}" value="{{ old('bac_year', $staff->bac_year ?? '') }}"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full">
                             @error('bac_year')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div>
-                            <label for="univ_specialty" class="block text-gray-700 mb-2">التخصص الجامعي</label>
+                            <label for="univ_specialty" class="block mb-2 text-gray-700">التخصص الجامعي</label>
                             <input type="text" id="univ_specialty" name="univ_specialty"
                                 value="{{ old('univ_specialty', $staff->univ_specialty ?? '') }}"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full">
                             @error('univ_specialty')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div id="branch_field" class="hidden">
-                            <label for="branch_id" class="block text-gray-700 mb-2">الشعبة *</label>
+                            <label for="branch_id" class="block mb-2 text-gray-700">الشعبة *</label>
                             <select id="branch_id" name="branch_id"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full">
                                 <option value="">اختر الشعبة</option>
                                 @foreach ($branches as $branch)
                                     <option value="{{ $branch->id }}" @selected(old('branch_id', $staff->branch_id ?? '') == $branch->id)>
@@ -229,26 +229,26 @@
                                 @endforeach
                             </select>
                             @error('branch_id')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div id="subjects_field" class="hidden mt-4">
-                            <label class="block text-gray-700 mb-2">المواد الدراسية</label>
+                            <label class="block mb-2 text-gray-700">المواد الدراسية</label>
                             <div class="space-y-2" id="subjects_container">
                             </div>
                             @error('subjects')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
 
-                    <div class="mt-8 pt-4 border-t border-gray-200 flex justify-end space-x-3 space-x-reverse">
+                    <div class="flex justify-end space-x-3 space-x-reverse mt-8 pt-4 border-gray-200 border-t">
                         <a href="{{ route('admin.staffs.index') }}"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                            class="hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg text-gray-700">
                             إلغاء
                         </a>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
                             {{ $staff->exists ? 'حفظ التغييرات' : 'إضافة المؤطر' }}
                         </button>
                     </div>

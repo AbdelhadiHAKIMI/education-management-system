@@ -25,16 +25,12 @@ class CsvProcessorController extends Controller
     {
         $user = Auth::user();
         $establishmentId = $user ? $user->establishment_id : null;
-        $branches = $establishmentId
-            ? Branch::whereHas('level.academicYear', function ($q) use ($establishmentId) {
-                $q->where('establishment_id', $establishmentId);
-            })->get(['id', 'name'])
-            : Branch::all(['id', 'name']);
-        $levels = $establishmentId
-            ? Level::whereHas('academicYear', function ($q) use ($establishmentId) {
-                $q->where('establishment_id', $establishmentId);
-            })->get(['id', 'name'])
-            : Level::all(['id', 'name']);
+
+        // FIX: Remove dependency on levels.academic_year_id
+        // Just show all branches and levels if you don't have a direct establishment link
+        $branches = Branch::all(['id', 'name']);
+        $levels = Level::all(['id', 'name']);
+
         return view('csv-processor', compact('branches', 'levels'));
     }
 
