@@ -12,6 +12,7 @@ CREATE TABLE `academic_years` (
   `name` varchar(50) NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 0,
   `establishment_id` bigint(20) unsigned NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -201,12 +202,9 @@ DROP TABLE IF EXISTS `levels`;
 CREATE TABLE `levels` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
-  `academic_year_id` bigint(20) unsigned NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `levels_academic_year_id_foreign` (`academic_year_id`),
-  CONSTRAINT `levels_academic_year_id_foreign` FOREIGN KEY (`academic_year_id`) REFERENCES `academic_years` (`id`) ON DELETE CASCADE
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `migrations`;
@@ -292,6 +290,7 @@ DROP TABLE IF EXISTS `programs`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `programs` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `establishment_id` bigint(20) unsigned NOT NULL,
   `name` varchar(100) NOT NULL,
   `description` text DEFAULT NULL,
   `start_date` date NOT NULL,
@@ -307,8 +306,10 @@ CREATE TABLE `programs` (
   KEY `programs_academic_year_id_foreign` (`academic_year_id`),
   KEY `programs_created_by_id_foreign` (`created_by_id`),
   KEY `programs_level_id_foreign` (`level_id`),
+  KEY `programs_establishment_id_foreign` (`establishment_id`),
   CONSTRAINT `programs_academic_year_id_foreign` FOREIGN KEY (`academic_year_id`) REFERENCES `academic_years` (`id`),
   CONSTRAINT `programs_created_by_id_foreign` FOREIGN KEY (`created_by_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `programs_establishment_id_foreign` FOREIGN KEY (`establishment_id`) REFERENCES `establishments` (`id`),
   CONSTRAINT `programs_level_id_foreign` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -469,21 +470,6 @@ CREATE TABLE `staff_special_grants` (
   CONSTRAINT `staff_special_grants_staff_id_foreign` FOREIGN KEY (`staff_id`) REFERENCES `staff` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `student_academic_years`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `student_academic_years` (
-  `student_id` bigint(20) unsigned NOT NULL,
-  `academic_year_id` bigint(20) unsigned NOT NULL,
-  `level_id` bigint(20) unsigned NOT NULL,
-  PRIMARY KEY (`student_id`,`academic_year_id`),
-  KEY `student_academic_years_academic_year_id_foreign` (`academic_year_id`),
-  KEY `student_academic_years_level_id_foreign` (`level_id`),
-  CONSTRAINT `student_academic_years_academic_year_id_foreign` FOREIGN KEY (`academic_year_id`) REFERENCES `academic_years` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `student_academic_years_level_id_foreign` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`),
-  CONSTRAINT `student_academic_years_student_id_foreign` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `student_payments`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -512,11 +498,18 @@ CREATE TABLE `students` (
   `student_phone` varchar(20) DEFAULT NULL,
   `quran_level` enum('مستظهر','خاتم') DEFAULT NULL,
   `branch_id` bigint(20) unsigned NOT NULL,
+  `initial_classroom` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `level_id` bigint(20) unsigned DEFAULT NULL,
+  `academic_year_id` bigint(20) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `students_branch_id_foreign` (`branch_id`),
-  CONSTRAINT `students_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`)
+  KEY `students_academic_year_id_foreign` (`academic_year_id`),
+  KEY `students_level_id_foreign` (`level_id`),
+  CONSTRAINT `students_academic_year_id_foreign` FOREIGN KEY (`academic_year_id`) REFERENCES `academic_years` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `students_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`),
+  CONSTRAINT `students_level_id_foreign` FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `subject_grades`;
@@ -524,15 +517,19 @@ DROP TABLE IF EXISTS `subject_grades`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `subject_grades` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `exam_result_id` bigint(20) unsigned NOT NULL,
+  `student_id` bigint(20) unsigned NOT NULL,
+  `exam_session_id` bigint(20) unsigned NOT NULL,
   `subject_id` bigint(20) unsigned NOT NULL,
   `grade` decimal(5,2) NOT NULL,
+  `coefficient` int(11) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `subject_grades_exam_result_id_foreign` (`exam_result_id`),
   KEY `subject_grades_subject_id_foreign` (`subject_id`),
-  CONSTRAINT `subject_grades_exam_result_id_foreign` FOREIGN KEY (`exam_result_id`) REFERENCES `exam_results` (`id`) ON DELETE CASCADE,
+  KEY `subject_grades_student_id_foreign` (`student_id`),
+  KEY `subject_grades_exam_session_id_foreign` (`exam_session_id`),
+  CONSTRAINT `subject_grades_exam_session_id_foreign` FOREIGN KEY (`exam_session_id`) REFERENCES `exam_sessions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `subject_grades_student_id_foreign` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`) ON DELETE CASCADE,
   CONSTRAINT `subject_grades_subject_id_foreign` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -631,3 +628,14 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (33,'32_add_level_i
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (34,'2025_05_13_072519_add_level_id_to_users_table',33);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (35,'6_add_missing_fields_to_establishments_table',33);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (38,'7_create_staff_table',34);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (39,'2025_06_03_080117_add_is_current_to_academic_years_table',35);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (40,'32_add_establishment_id_to_program_table',35);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (41,'2025_06_04_161249_add_establishment_id_to_students_table',36);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (42,'2024_01_01_000001_add_initial_classroom_to_students_table',37);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (43,'2024_06_09_000001_add_status_to_academic_years_table',37);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (44,'2024_06_09_130000_add_academic_year_id_to_students_table',38);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (45,'2024_06_11_000001_add_level_id_to_students_table',39);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (46,'2024_06_09_000001_add_subject_fields_to_subject_grades_table',40);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (47,'20_add_student_id_to_subject_grades_table',41);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (48,'2025_06_16_043943_modify_subject_grades_table',42);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (49,'2025_06_16_044549_remove_academic_year_id_from_levels_table',43);
