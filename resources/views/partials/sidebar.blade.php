@@ -1,5 +1,22 @@
-<aside class="top-0 sticky bg-white shadow-md w-64 h-screen">
-    <div class="p-4 border-gray-200 border-b">
+<aside class="top-0 left-0 z-40 fixed md:sticky bg-white shadow-md w-64 h-screen transition-transform -translate-x-full md:translate-x-0 duration-300 ease-in-out transform" id="sidebar">
+    <!-- Mobile Sidebar Header -->
+    <div class="md:hidden flex justify-between items-center p-4 border-gray-200 border-b">
+        <div class="flex items-center space-x-3 space-x-reverse">
+            <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'مدير المؤسسة') }}&background=random"
+                class="rounded-full w-10 h-10"
+                alt="صورة المستخدم">
+            <div>
+                <p class="font-medium">{{ Auth::user()->name ?? 'اسم المستخدم' }}</p>
+                <p class="text-gray-500 text-xs">مدير المؤسسة</p>
+            </div>
+        </div>
+        <button id="sidebar-close" class="text-gray-500 hover:text-gray-700">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Desktop Sidebar Header -->
+    <div class="hidden md:block p-4 border-gray-200 border-b">
         <div class="flex items-center space-x-3 space-x-reverse">
             <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'مدير المؤسسة') }}&background=random"
                 class="rounded-full w-10 h-10"
@@ -11,7 +28,7 @@
         </div>
     </div>
 
-    <div class="p-4">
+    <div class="p-4 h-[calc(100vh-120px)] overflow-y-auto">
         <ul class="space-y-2 mt-4">
             <li>
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-2 space-x-reverse bg-blue-100 p-3 rounded-lg text-blue-800">
@@ -87,4 +104,38 @@
         </ul>
     </div>
 </aside>
+
+<!-- Mobile Sidebar Toggle Button -->
+<div class="md:hidden right-4 bottom-4 z-30 fixed">
+    <button id="sidebar-toggle" class="bg-blue-800 shadow-lg p-3 rounded-full text-white">
+        <i class="fas fa-bars"></i>
+    </button>
+</div>
+
+<script>
+    // Toggle sidebar on mobile
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const closeBtn = document.getElementById('sidebar-close');
+        
+        // Show/hide sidebar
+        toggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+        
+        // Close sidebar
+        closeBtn.addEventListener('click', function() {
+            sidebar.classList.add('-translate-x-full');
+        });
+        
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!sidebar.contains(event.target) && event.target !== toggleBtn) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    });
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

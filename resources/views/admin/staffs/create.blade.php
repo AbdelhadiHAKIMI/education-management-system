@@ -146,7 +146,7 @@
                     action="{{ isset($staff) && $staff->exists ? route('admin.staffs.update', $staff->id) : route('admin.staffs.store') }}">
                     @csrf
                     @if ($staff->exists)
-                        @method('PUT')
+                    @method('PUT')
                     @endif
 
                     <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
@@ -157,7 +157,7 @@
                                 class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full"
                                 required>
                             @error('full_name')
-                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                            <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -168,7 +168,7 @@
                                 class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full"
                                 required>
                             @error('birth_date')
-                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                            <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -183,7 +183,7 @@
                                 <option value="خدمات" @selected(old('type', $staff->type ?? '') == 'خدمات')>خدمات</option>
                             </select>
                             @error('type')
-                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                            <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -193,7 +193,7 @@
                                 value="{{ old('phone', $staff->phone ?? '') }}"
                                 class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full">
                             @error('phone')
-                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                            <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -203,7 +203,7 @@
                                 max="{{ date('Y') + 1 }}" value="{{ old('bac_year', $staff->bac_year ?? '') }}"
                                 class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full">
                             @error('bac_year')
-                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                            <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -213,7 +213,7 @@
                                 value="{{ old('univ_specialty', $staff->univ_specialty ?? '') }}"
                                 class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full">
                             @error('univ_specialty')
-                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                            <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -223,13 +223,13 @@
                                 class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full">
                                 <option value="">اختر الشعبة</option>
                                 @foreach ($branches as $branch)
-                                    <option value="{{ $branch->id }}" @selected(old('branch_id', $staff->branch_id ?? '') == $branch->id)>
-                                        {{ $branch->name }}
-                                    </option>
+                                <option value="{{ $branch->id }}" @selected(old('branch_id', $staff->branch_id ?? '') == $branch->id)>
+                                    {{ $branch->name }}
+                                </option>
                                 @endforeach
                             </select>
                             @error('branch_id')
-                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                            <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
 
@@ -238,7 +238,7 @@
                             <div class="space-y-2" id="subjects_container">
                             </div>
                             @error('subjects')
-                                <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                            <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
@@ -323,8 +323,13 @@
                     branchSelect.required = true;
 
                     if (branchSelect.value) {
-                        const preselectedSubjects = initialLoad && {{ $staff->exists ? 'true' : 'false' }} ?
-                            @json($staff->subjects->pluck('id')->map(fn($id) => (string) $id)->toArray()) : [];
+                        // Only use Blade variables if inside .blade.php and $staff is defined
+                        let preselectedSubjects = [];
+                        @if(isset($staff) && $staff->exists && isset($staff-> subjects))
+                        preselectedSubjects = initialLoad ? @json($staff-> subjects-> pluck('id') - > map(function($id) {
+                            return (string) $id;
+                        }) - > toArray()) : [];
+                        @endif
                         loadSubjects(branchSelect.value, preselectedSubjects);
                     } else {
                         subjectsField.classList.add('hidden'); // Hide subjects if no branch selected yet
@@ -332,10 +337,7 @@
                 } else {
                     branchField.classList.add('hidden'); // Hide branch field
                     branchSelect.required = false;
-                    // Only clear branch value if not on initial load AND it previously had a value
-                    // Or if it's a new staff and the default type isn't academic staff
-                    // Simplified: If type is NOT 'مؤطر دراسي', clear the branch and subjects
-                    branchSelect.value = ''; // This line is still needed when switching type
+                    branchSelect.value = '';
                     subjectsField.classList.add('hidden'); // Hide subjects field
                     subjectsContainer.innerHTML = ''; // Clear subjects
                 }

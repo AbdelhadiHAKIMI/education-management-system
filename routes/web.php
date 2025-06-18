@@ -163,7 +163,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
    Route::get('/programs/index', [ProgramController::class, 'index'])->name('admin.programs.index');
    Route::get('/programs/create', [ProgramController::class, 'create'])->name('admin.programs.create');
    Route::post('/programs/store', [ProgramController::class, 'store'])->name('admin.programs.store');
-   Route::get('/programs/edit', [ProgramController::class, 'edit'])->name('admin.programs.edit');
+   Route::get('/programs/{program}/edit', [ProgramController::class, 'edit'])->name('admin.programs.edit'); // <-- changed
    Route::get('/programs/show', [ProgramController::class, 'show'])->name('admin.programs.show');
    Route::get('/programs/attendance', [ProgramController::class, 'attendance'])->name('admin.programs.attendance');
 
@@ -175,7 +175,6 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
    Route::get('/students/show', [StudentController::class, 'show'])->name('admin.students.show');
    Route::post('/store', [AddStudentController::class, 'store'])->name('students.store');
 });
-
 
 // ADMIN PROGRAMS ROUTES - KEPT AS IS FOR NOW
 Route::get('/admin/program/create', function () {
@@ -307,3 +306,14 @@ Route::prefix('admin/students')->middleware(['auth'])->group(function () {
 Route::post('/admin/subjects/store', [\App\Http\Controllers\Admin\SubjectController::class, 'store'])->name('admin.subjects.store');
 
 Route::get('/exam-results/dashboard', [\App\Http\Controllers\ExamResultController::class, 'dashboard'])->name('exam_results.dashboard');
+
+Route::prefix('admin/programs')->middleware(['auth'])->group(function () {
+   Route::get('/wizard/step1', [ProgramController::class, 'wizardStep1'])->name('admin.programs.wizard.step1');
+   Route::post('/wizard/step1', [ProgramController::class, 'wizardStep1Post'])->name('admin.programs.wizard.step1.post');
+   Route::get('/wizard/step2', [ProgramController::class, 'wizardStep2'])->name('admin.programs.wizard.step2');
+   Route::post('/wizard/step2', [ProgramController::class, 'wizardStep2Post'])->name('admin.programs.wizard.step2.post');
+   Route::get('/wizard/step3', [ProgramController::class, 'wizardStep3'])->name('admin.programs.wizard.step3');
+   Route::post('/wizard/step3', [ProgramController::class, 'wizardStep3Post'])->name('admin.programs.wizard.step3.post');
+   Route::get('/wizard/step4', [ProgramController::class, 'wizardStep4'])->name('admin.programs.wizard.step4');
+   Route::post('/wizard/step4', [ProgramController::class, 'wizardStep4Post'])->name('admin.programs.wizard.step4.post');
+});

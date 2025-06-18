@@ -118,7 +118,7 @@
                         </div>
                         <div>
                             <i class="mr-1 fas fa-users"></i>
-                            {{ \App\Models\ProgramInvitation::where('program_id', $program->id)->where('status', 'accepted')->count() }} طالب
+                            {{ $program->invitations->where('status', 'accepted')->count() }} طالب
                         </div>
                         <div>
                             <i class="mr-1 fas fa-coins"></i>
