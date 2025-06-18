@@ -12,7 +12,7 @@ use App\Models\AcademicYear;
 
 class StudentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
         $establishmentId = $user ? $user->establishment_id : null;
@@ -22,13 +22,21 @@ class StudentController extends Controller
                 ->where('status', true)
                 ->first();
         }
-        $students = $activeAcademicYear
+
+        $branchId = $request->input('branch_id');
+        $studentsQuery = $activeAcademicYear
             ? \App\Models\Student::with(['branch', 'level'])
             ->where('academic_year_id', $activeAcademicYear->id)
-            ->paginate(10) // <-- set to 10 per page
-            : collect(); // empty collection if no active year
+            : \App\Models\Student::query()->whereRaw('0=1'); // empty if no active year
 
-        return view('admin.students.index', compact('students'));
+        if ($branchId) {
+            $studentsQuery->where('branch_id', $branchId);
+        }
+
+        $students = $studentsQuery->paginate(10);
+        $branches = \App\Models\Branch::all();
+
+        return view('admin.students.index', compact('students', 'branches', 'branchId'));
     }
 
     public function create()

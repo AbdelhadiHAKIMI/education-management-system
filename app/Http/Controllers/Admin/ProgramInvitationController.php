@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Program_invitation;
+use App\Models\ProgramInvitation;
 use App\Models\Student;
 use App\Models\Level;
 use League\Csv\Writer;
@@ -13,13 +13,40 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use App\Models\Branch;
+use Illuminate\Support\Facades\Auth;
 
 class ProgramInvitationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $programInvitations = Program_invitation::all();
-        return view('admin.program_invitations.index', compact('programInvitations'));
+        $user = Auth::user();
+        $establishmentId = $user ? $user->establishment_id : null;
+        $activeAcademicYear = null;
+        if ($establishmentId) {
+            $activeAcademicYear = \App\Models\AcademicYear::where('establishment_id', $establishmentId)
+                ->where('status', true)
+                ->first();
+        }
+
+        $levelId = $request->input('level_id');
+        $query = \App\Models\ProgramInvitation::with(['student', 'program']);
+
+        if ($activeAcademicYear) {
+            $query->whereHas('student', function ($q) use ($activeAcademicYear) {
+                $q->where('academic_year_id', $activeAcademicYear->id);
+            });
+        }
+
+        if ($levelId) {
+            $query->whereHas('student', function ($q) use ($levelId) {
+                $q->where('level_id', $levelId);
+            });
+        }
+
+        $programInvitations = $query->get();
+        $levels = \App\Models\Level::all();
+
+        return view('admin.program_invitations.index', compact('programInvitations', 'levels', 'levelId'));
     }
 
     public function create()
@@ -38,23 +65,23 @@ class ProgramInvitationController extends Controller
             'responded_at' => 'nullable|date',
         ]);
 
-        Program_invitation::create($request->all());
+        ProgramInvitation::create($request->all());
 
         return redirect()->route('admin.program_invitations.index')
             ->with('success', 'Program invitation created successfully.');
     }
 
-    public function show(Program_invitation $programInvitation)
+    public function show(ProgramInvitation $programInvitation)
     {
         return view('admin.program_invitations.show', compact('programInvitation'));
     }
 
-    public function edit(Program_invitation $programInvitation)
+    public function edit(ProgramInvitation $programInvitation)
     {
         return view('admin.program_invitations.edit', compact('programInvitation'));
     }
 
-    public function update(Request $request, Program_invitation $programInvitation)
+    public function update(Request $request, ProgramInvitation $programInvitation)
     {
         $request->validate([
             'student_id' => 'required|exists:students,id',
@@ -71,7 +98,7 @@ class ProgramInvitationController extends Controller
             ->with('success', 'Program invitation updated successfully.');
     }
 
-    public function destroy(Program_invitation $programInvitation)
+    public function destroy(ProgramInvitation $programInvitation)
     {
         $programInvitation->delete();
 

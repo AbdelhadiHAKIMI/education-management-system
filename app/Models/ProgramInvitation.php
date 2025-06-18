@@ -34,5 +34,4 @@ class ProgramInvitation extends Model
     {
         return $this->belongsTo(Program::class);
     }
-    
 }

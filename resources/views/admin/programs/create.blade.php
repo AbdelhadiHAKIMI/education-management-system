@@ -3,401 +3,398 @@
 @section('title', 'إضافة برنامج جديد')
 
 @section('content')
-{{-- IMPORTANT: Fix for academic years conflict in navbar --}}
-{{--
-    Do NOT pass $academicYears or $activeAcademicYear to this view from your controller!
-    Only pass $formAcademicYears for the form select if needed.
-    If you use compact('formAcademicYears', ...) in your controller, DO NOT include 'academicYears' or 'activeAcademicYear'.
-    If you use view(...)->with([...]), DO NOT include 'academicYears' or 'activeAcademicYear'.
-    This ensures the navbar partial computes the correct academic years from the DB.
---}}
-<div class="flex justify-between items-center mb-6">
-    <h1 class="font-bold text-dark text-2xl">لوحة التحكم</h1>
-</div>
-<script>
-    // Show the wizard directly on page load
-    window.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('newYearWizard').classList.remove('hidden');
-    });
-</script>
+@php
+// Ensure variables are defined
+if (!isset($students)) $students = collect();
+if (!isset($branches)) $branches = \App\Models\Branch::all();
+if (!isset($staff)) $staff = collect();
+if (!isset($academicYears)) $academicYears = \App\Models\AcademicYear::where('establishment_id', auth()->user()->establishment_id ?? null)->where('is_active', true)->get();
+if (!isset($step1)) $step1 = [];
+if (!isset($step2)) $step2 = [];
+if (!isset($step3)) $step3 = [];
+@endphp
 
-<!-- New Program (Hidden by default) -->
-<div id="newYearWizard" class="hidden bg-white shadow-md mb-8 p-6 rounded-lg">
-    <h2 class="mb-6 pb-2 border-b font-semibold text-dark text-xl">معالج بدء برنامج جديد</h2>
+<div class="mx-auto px-4 py-8 max-w-6xl">
+    <!-- Header -->
+    <div class="flex md:flex-row flex-col justify-between items-start md:items-center mb-8">
+        <div>
+            <h1 class="font-bold text-gray-800 text-2xl">إضافة برنامج جديد</h1>
+            <p class="mt-1 text-gray-600">أكمل المعالج لإنشاء برنامج تعليمي جديد</p>
+        </div>
+        <a href="{{ route('admin.programs.index') }}" class="flex items-center mt-4 md:mt-0 text-primary hover:text-primary-dark">
+            <i class="fa-arrow-left ml-2 fas"></i>
+            العودة إلى قائمة البرامج
+        </a>
+    </div>
 
-    <!-- Steps Indicator -->
-    <div class="relative flex justify-between mb-8">
-        <div class="flex flex-1 items-center">
-            <div class="flex justify-center items-center bg-primary rounded-full w-8 h-8 text-white">1</div>
-            <div class="flex-1 bg-primary mx-2 h-1"></div>
+    <!-- Wizard Container -->
+    <div class="bg-white shadow-md border border-gray-100 rounded-xl overflow-hidden">
+        <!-- Wizard Header -->
+        <div class="bg-gray-50 p-6 border-gray-100 border-b">
+            <h2 class="font-semibold text-gray-800 text-xl">معالج إنشاء البرنامج</h2>
         </div>
-        <div class="flex flex-1 items-center">
-            <div class="flex justify-center items-center bg-gray-200 rounded-full w-8 h-8 text-gray-600">2</div>
-            <div class="flex-1 bg-gray-200 mx-2 h-1"></div>
-        </div>
-        <div class="flex flex-1 items-center">
-            <div class="flex justify-center items-center bg-gray-200 rounded-full w-8 h-8 text-gray-600">3</div>
-            <div class="flex-1 bg-gray-200 mx-2 h-1"></div>
-        </div>
-        <div class="flex items-center">
-            <div class="flex justify-center items-center bg-gray-200 rounded-full w-8 h-8 text-gray-600">4</div>
+
+        <!-- Steps Indicator -->
+        <div class="px-6 pt-6 pb-2">
+            <div class="relative">
+                <div class="flex justify-between">
+                    @foreach([1, 2, 3, 4] as $step)
+                    <div class="z-10 relative flex flex-col items-center">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 flex justify-center items-center w-10 h-10 rounded-full border-2 {{ $step == 1 ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-300">
+                                {{ $step }}
+                            </div>
+                            @if($step < 4)
+                                <div class="w-24 h-1 mx-2 {{ $step == 1 ? 'bg-primary' : 'bg-gray-200' }} transition-colors duration-300">
+                        </div>
+                        @endif
+                    </div>
+                    <span class="mt-2 text-xs font-medium {{ $step == 1 ? 'text-primary' : 'text-gray-500' }}">
+                        @if($step == 1) معلومات البرنامج
+                        @elseif($step == 2) الطلاب
+                        @elseif($step == 3) الفريق
+                        @else إنهاء
+                        @endif
+                    </span>
+                </div>
+                @endforeach
+            </div>
+            <div class="top-5 right-0 left-0 z-0 absolute bg-gray-100 h-1"></div>
         </div>
     </div>
 
-    <!-- Step 1: Basic Information -->
-    <form method="POST" action="{{ route('admin.programs.store') }}">
-        @csrf
-        <div id="step1" class="step-content">
-            <h3 class="mb-4 font-semibold text-dark text-lg">معلومات البرنامج</h3>
+    <!-- Step 1: Program Information -->
+    <div id="step1" class="p-6 step-content">
+        <h3 class="flex items-center mb-6 font-semibold text-gray-800 text-lg">
+            <span class="flex justify-center items-center bg-primary/10 mr-3 rounded-full w-8 h-8 text-primary">1</span>
+            معلومات البرنامج الأساسية
+        </h3>
+
+        <form method="POST" action="{{ route('admin.programs.store') }}" id="program-create-form">
+            @csrf
             <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
+                <!-- Name -->
                 <div>
-                    <label class="block mb-1 text-gray-700">اسم البرنامج *</label>
-                    <input name="name" type="text" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full"
+                    <label class="block mb-1 font-medium text-gray-700 text-sm">اسم البرنامج *</label>
+                    <input name="name" type="text" value="{{ old('name', $wizard['name'] ?? '') }}"
+                        class="px-4 py-2.5 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full transition-all duration-300"
                         placeholder="مثال: التربص الصيفي" required>
                 </div>
+
+                <!-- Type -->
                 <div>
-                    <label class="block mb-1 text-gray-700">نوع البرنامج *</label>
-                    <select name="type" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                    <label class="block mb-1 font-medium text-gray-700 text-sm">نوع البرنامج *</label>
+                    <select name="type" class="px-4 py-2.5 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full transition-all duration-300" required>
                         <option value="">اختر النوع</option>
-                        <option value="سنة دراسية كاملة">سنة دراسية كاملة</option>
-                        <option value="فصل دراسي">فصل دراسي</option>
-                        <option value="دورة تكوينية">دورة تكوينية</option>
+                        <option value="سنة دراسية كاملة" {{ old('type', $wizard['type'] ?? '') == 'سنة دراسية كاملة' ? 'selected' : '' }}>سنة دراسية كاملة</option>
+                        <option value="فصل دراسي" {{ old('type', $wizard['type'] ?? '') == 'فصل دراسي' ? 'selected' : '' }}>فصل دراسي</option>
+                        <option value="دورة تكوينية" {{ old('type', $wizard['type'] ?? '') == 'دورة تكوينية' ? 'selected' : '' }}>دورة تكوينية</option>
                     </select>
                 </div>
+
+                <!-- Dates -->
                 <div>
-                    <label class="block mb-1 text-gray-700">تاريخ البدء *</label>
-                    <input name="start_date" type="date" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                    <label class="block mb-1 font-medium text-gray-700 text-sm">تاريخ البدء *</label>
+                    <input name="start_date" type="date" value="{{ old('start_date', $wizard['start_date'] ?? '') }}"
+                        class="w-full px-4 py-2.5 border {{ $errors->has('start_date') ? 'border-red-500' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
+                        required>
+                    @error('start_date')
+                    <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                    @enderror
                 </div>
+
                 <div>
-                    <label class="block mb-1 text-gray-700">تاريخ الانتهاء *</label>
-                    <input name="end_date" type="date" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                    <label class="block mb-1 font-medium text-gray-700 text-sm">تاريخ الانتهاء *</label>
+                    <input name="end_date" type="date" value="{{ old('end_date', $wizard['end_date'] ?? '') }}"
+                        class="w-full px-4 py-2.5 border {{ $errors->has('end_date') ? 'border-red-500' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300"
+                        required>
+                    @error('end_date')
+                    <p class="mt-1 text-red-600 text-sm">{{ $message }}</p>
+                    @enderror
                 </div>
+
+                <!-- Academic Year -->
                 <div>
-                    <label class="block mb-1 text-gray-700">السنة الدراسية *</label>
-                    <select name="academic_year_id" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
-                        <option value="">اختر السنة الدراسية</option>
-                        @foreach($formAcademicYears ?? [] as $year)
-                        <option value="{{ $year->id }}">{{ $year->name }}</option>
-                        @endforeach
+                    <label class="block mb-1 font-medium text-gray-700 text-sm">السنة الدراسية *</label>
+                    @php
+                    // Get the user's establishment ID
+                    $userEstablishmentId = auth()->user()->establishment_id ?? null;
+                    // Get all academic years for the user's establishment
+                    $academicYearsForEst = $academicYears->where('establishment_id', $userEstablishmentId);
+                    // Get the active academic year for the user's establishment
+                    $activeAcademicYear = $academicYearsForEst->where('status', true)->first();
+                    @endphp
+                    <select name="academic_year_id"
+                        class="bg-gray-100 px-4 py-2.5 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full transition-all duration-300 cursor-not-allowed"
+                        required
+                        readonly
+                        disabled>
+                        @if($activeAcademicYear)
+                        <option value="{{ $activeAcademicYear->id }}" selected>{{ $activeAcademicYear->name }}</option>
+                        @else
+                        <option value="">لا توجد سنة دراسية نشطة</option>
+                        @endif
                     </select>
+                    @if($activeAcademicYear)
+                    <input type="hidden" name="academic_year_id" value="{{ $activeAcademicYear->id }}">
+                    @endif
                 </div>
+
+                <!-- Level -->
                 <div>
-                    <label class="block mb-1 text-gray-700">المستوى *</label>
-                    <select name="level_id" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                    <label class="block mb-1 font-medium text-gray-700 text-sm">المستوى *</label>
+                    <select name="level_id" class="px-4 py-2.5 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full transition-all duration-300" required>
                         <option value="">اختر المستوى</option>
                         @foreach($levels as $level)
-                        <option value="{{ $level->id }}">{{ $level->name }}</option>
+                        <option value="{{ $level->id }}" {{ old('level_id', $wizard['level_id'] ?? '') == $level->id ? 'selected' : '' }}>{{ $level->name }}</option>
                         @endforeach
                     </select>
                 </div>
+
+                <!-- Fees -->
                 <div>
-                    <label class="block mb-1 text-gray-700">رسوم التسجيل *</label>
-                    <input name="registration_fees" type="number" min="0" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full" required>
+                    <label class="block mb-1 font-medium text-gray-700 text-sm">رسوم التسجيل *</label>
+                    <div class="relative">
+                        <input name="registration_fees" type="number" min="0" value="{{ old('registration_fees', $wizard['registration_fees'] ?? '') }}"
+                            class="py-2.5 pr-4 pl-10 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full transition-all duration-300"
+                            required>
+                        <span class="top-1/2 left-3 absolute text-gray-500 -translate-y-1/2 transform">د.ج</span>
+                    </div>
                 </div>
+
+                <!-- Status -->
                 <div>
-                    <label class="block mb-1 text-gray-700">نشط؟</label>
-                    <select name="is_active" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full">
-                        <option value="1">نعم</option>
-                        <option value="0">لا</option>
+                    <label class="block mb-1 font-medium text-gray-700 text-sm">حالة البرنامج</label>
+                    <select name="is_active" class="px-4 py-2.5 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full transition-all duration-300">
+                        <option value="1" {{ (old('is_active', $wizard['is_active'] ?? '1') == '1') ? 'selected' : '' }}>نشط</option>
+                        <option value="0" {{ (old('is_active', $wizard['is_active'] ?? '1') == '0') ? 'selected' : '' }}>غير نشط</option>
                     </select>
                 </div>
             </div>
+
+            <!-- Description -->
             <div class="mt-6">
-                <label class="block mb-1 text-gray-700">وصف البرنامج</label>
-                <textarea name="description" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full"
-                    rows="3" placeholder="أدخل وصفاً مختصراً"></textarea>
+                <label class="block mb-1 font-medium text-gray-700 text-sm">وصف البرنامج</label>
+                <textarea name="description" class="px-4 py-2.5 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full transition-all duration-300"
+                    rows="3" placeholder="أدخل وصفاً مختصراً للبرنامج">{{ old('description', $wizard['description'] ?? '') }}</textarea>
             </div>
+
             <input type="hidden" name="created_by_id" value="{{ auth()->id() }}">
             <input type="hidden" name="establishment_id" value="{{ session('establishment')->id ?? (auth()->user()->establishment_id ?? '') }}">
-            <div class="flex justify-end space-x-4 space-x-reverse mt-8">
-                <a href="{{ route('admin.programs.index') }}" class="hover:bg-gray-100 px-6 py-2 border border-gray-300 rounded-lg text-gray-700">
-                    إلغاء
-                </a>
-                <button type="submit" class="bg-primary hover:bg-blue-700 px-6 py-2 rounded-lg text-white">
+
+            <!-- Navigation -->
+            <div class="flex justify-end space-x-3 mt-8">
+                <button type="button"
+                    onclick="nextStep(2)"
+                    class="flex items-center bg-green-600 hover:bg-green-700 shadow px-6 py-2.5 rounded-lg font-semibold text-white transition-colors duration-300">
+                    التالي
+                    <i class="fa-arrow-left mr-2 fas"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Step 2: Students -->
+    <div id="step2" class="hidden p-6 step-content">
+        <h3 class="flex items-center mb-6 font-semibold text-gray-800 text-lg">
+            <span class="flex justify-center items-center bg-primary/10 mr-3 rounded-full w-8 h-8 text-primary">2</span>
+            اختيار الطلاب المشاركين
+        </h3>
+
+        <div class="bg-gray-50 mb-6 p-4 rounded-lg">
+            <div class="flex md:flex-row flex-col md:justify-between md:items-center gap-4">
+                <div class="flex-1">
+                    <label class="block mb-1 font-medium text-gray-700 text-sm">تصفية حسب الشعبة</label>
+                    <select id="branchFilter" class="px-4 py-2 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full transition-all duration-300">
+                        <option value="">كل الشعب</option>
+                        @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="button" id="selectAllStudents" class="bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm transition-colors duration-300">
+                        تحديد الكل
+                    </button>
+                    <button type="button" id="deselectAllStudents" class="bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm transition-colors duration-300">
+                        إلغاء الكل
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="gap-3 grid grid-cols-1 md:grid-cols-2" id="students-list">
+            @foreach($students as $student)
+            <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer" data-branch="{{ $student->branch_id }}">
+                <input type="checkbox" name="student_ids[]" value="{{ $student->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200 student-checkbox" checked>
+                <div class="ml-3">
+                    <span class="block font-medium text-gray-800 text-sm">{{ $student->full_name }}</span>
+                    <span class="block mt-0.5 text-gray-500 text-xs">{{ $student->branch?->name ?? 'بدون شعبة' }}</span>
+                </div>
+            </label>
+            @endforeach
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex justify-between mt-8">
+            <button type="button"
+                onclick="prevStep(1)"
+                class="flex items-center bg-gray-200 hover:bg-gray-300 shadow px-6 py-2.5 rounded-lg font-semibold text-gray-800 transition-colors duration-300">
+                <i class="fa-arrow-right mr-2 fas"></i>
+                السابق
+            </button>
+            <button type="button"
+                onclick="nextStep(3)"
+                class="flex items-center bg-green-600 hover:bg-green-700 shadow px-6 py-2.5 rounded-lg font-semibold text-white transition-colors duration-300">
+                التالي
+                <i class="fa-arrow-left mr-2 fas"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 3: Staff -->
+    <div id="step3" class="hidden p-6 step-content">
+        <h3 class="flex items-center mb-6 font-semibold text-gray-800 text-lg">
+            <span class="flex justify-center items-center bg-primary/10 mr-3 rounded-full w-8 h-8 text-primary">3</span>
+            تعيين الفريق العامل
+        </h3>
+
+        <div class="space-y-8">
+            <!-- Supervisors -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="mb-3 font-medium text-gray-800 text-md">المشرفون</h4>
+                <div class="gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($staff as $s)
+                    <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
+                        <input type="checkbox" name="supervisor_ids[]" value="{{ $s->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
+                        <span class="ml-3 text-gray-800 text-sm">{{ $s->full_name }}</span>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- Teachers -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="mb-3 font-medium text-gray-800 text-md">الأساتذة</h4>
+                <div class="gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($staff as $s)
+                    <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
+                        <input type="checkbox" name="teacher_ids[]" value="{{ $s->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
+                        <span class="ml-3 text-gray-800 text-sm">{{ $s->full_name }}</span>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- Admins -->
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h4 class="mb-3 font-medium text-gray-800 text-md">الإداريون</h4>
+                <div class="gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($staff as $s)
+                    <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
+                        <input type="checkbox" name="admin_ids[]" value="{{ $s->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
+                        <span class="ml-3 text-gray-800 text-sm">{{ $s->full_name }}</span>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex justify-between mt-8">
+            <button type="button"
+                onclick="prevStep(2)"
+                class="flex items-center bg-gray-200 hover:bg-gray-300 shadow px-6 py-2.5 rounded-lg font-semibold text-gray-800 transition-colors duration-300">
+                <i class="fa-arrow-right mr-2 fas"></i>
+                السابق
+            </button>
+            <button type="button"
+                onclick="nextStep(4)"
+                class="flex items-center bg-green-600 hover:bg-green-700 shadow px-6 py-2.5 rounded-lg font-semibold text-white transition-colors duration-300">
+                التالي
+                <i class="fa-arrow-left mr-2 fas"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 4: Confirmation -->
+    <div id="step4" class="hidden p-6 step-content">
+        <h3 class="flex items-center mb-6 font-semibold text-gray-800 text-lg">
+            <span class="flex justify-center items-center bg-primary/10 mr-3 rounded-full w-8 h-8 text-primary">4</span>
+            تأكيد إنشاء البرنامج
+        </h3>
+
+        <div class="bg-gray-50 mb-6 p-6 rounded-lg">
+            <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
+                <!-- Program Info -->
+                <div>
+                    <h4 class="mb-3 pb-2 border-gray-200 border-b font-medium text-gray-800">معلومات البرنامج</h4>
+                    <ul class="space-y-2" id="program-data-preview-list">
+                        <!-- Filled by JavaScript -->
+                    </ul>
+                </div>
+
+                <!-- Students -->
+                <div>
+                    <h4 class="mb-3 pb-2 border-gray-200 border-b font-medium text-gray-800">الطلاب المشاركون</h4>
+                    <ul class="space-y-2 max-h-60 overflow-y-auto" id="students-data-preview-list">
+                        <!-- Filled by JavaScript -->
+                    </ul>
+                </div>
+
+                <!-- Staff -->
+                <div class="md:col-span-2">
+                    <h4 class="mb-3 pb-2 border-gray-200 border-b font-medium text-gray-800">الفريق العامل</h4>
+                    <ul class="space-y-2" id="staff-data-preview-list">
+                        <!-- Filled by JavaScript -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('admin.programs.store') }}" id="finalProgramForm">
+            @csrf
+            <!-- Hidden fields -->
+            <input type="hidden" name="name" id="hidden_name">
+            <input type="hidden" name="type" id="hidden_type">
+            <input type="hidden" name="start_date" id="hidden_start_date">
+            <input type="hidden" name="end_date" id="hidden_end_date">
+            <input type="hidden" name="academic_year_id" id="hidden_academic_year_id">
+            <input type="hidden" name="level_id" id="hidden_level_id">
+            <input type="hidden" name="registration_fees" id="hidden_registration_fees">
+            <input type="hidden" name="is_active" id="hidden_is_active">
+            <input type="hidden" name="description" id="hidden_description">
+            <input type="hidden" name="created_by_id" value="{{ auth()->id() }}">
+            <input type="hidden" name="establishment_id" value="{{ session('establishment')->id ?? (auth()->user()->establishment_id ?? '') }}">
+            <div id="hidden-students"></div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between mt-8">
+                <button type="button"
+                    onclick="prevStep(3)"
+                    class="flex items-center bg-gray-200 hover:bg-gray-300 shadow px-6 py-2.5 rounded-lg font-semibold text-gray-800 transition-colors duration-300">
+                    <i class="fa-arrow-right mr-2 fas"></i>
+                    السابق
+                </button>
+                <button type="submit"
+                    id="final-submit-btn"
+                    class="flex items-center bg-green-700 hover:bg-green-800 shadow px-6 py-2.5 rounded-lg font-bold text-white transition-colors duration-300">
+                    <i class="mr-2 fas fa-save"></i>
                     حفظ البرنامج
                 </button>
             </div>
-        </div>
-    </form>
-
-    <!-- Step 2: Program Structure -->
-    <div id="step2" class="hidden step-content">
-        <h3 class="mb-4 font-semibold text-dark text-lg">هيكلة البرامج التعليمية</h3>
-
-        <div class="bg-gray-50 mb-6 p-4 rounded-lg">
-            <h4 class="mb-3 font-medium text-dark">اختر طريقة إنشاء البرامج:</h4>
-            <div class="flex space-x-4 space-x-reverse">
-                <label class="flex items-center space-x-2 space-x-reverse">
-                    <input type="radio" name="programOption" value="copy" checked class="text-primary">
-                    <span>نسخ من سنة سابقة</span>
-                </label>
-                <label class="flex items-center space-x-2 space-x-reverse">
-                    <input type="radio" name="programOption" value="new" class="text-primary">
-                    <span>إنشاء برامج جديدة</span>
-                </label>
-            </div>
-        </div>
-
-        <div id="copyProgramsSection">
-            <div class="mb-4">
-                <label class="block mb-1 text-gray-700">اختر السنة الدراسية لنسخ البرامج منها</label>
-                <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full md:w-1/2">
-                    <option value="">2022/2023</option>
-                    <option>2021/2022</option>
-                    <option>2020/2021</option>
-                </select>
-            </div>
-
-            <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <table class="w-full">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-4 py-2 font-medium text-dark text-right">اختيار</th>
-                            <th class="px-4 py-2 font-medium text-dark text-right">اسم البرنامج</th>
-                            <th class="px-4 py-2 font-medium text-dark text-right">المستوى</th>
-                            <th class="px-4 py-2 font-medium text-dark text-right">المدة</th>
-                            <th class="px-4 py-2 font-medium text-dark text-right">التكلفة</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-4 py-2 text-center">
-                                <input type="checkbox" checked class="rounded text-primary">
-                            </td>
-                            <td class="px-4 py-2">رياضيات - ثانوي</td>
-                            <td class="px-4 py-2">الأولى إلى الثالثة ثانوي</td>
-                            <td class="px-4 py-2">9 أشهر</td>
-                            <td class="px-4 py-2">45,000 د.ج</td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-2 text-center">
-                                <input type="checkbox" checked class="rounded text-primary">
-                            </td>
-                            <td class="px-4 py-2">علوم تجريبية - ثانوي</td>
-                            <td class="px-4 py-2">الأولى إلى الثالثة ثانوي</td>
-                            <td class="px-4 py-2">9 أشهر</td>
-                            <td class="px-4 py-2">45,000 د.ج</td>
-                        </tr>
-                        <tr>
-                            <td class="px-4 py-2 text-center">
-                                <input type="checkbox" class="rounded text-primary">
-                            </td>
-                            <td class="px-4 py-2">برنامج الدعم المدرسي</td>
-                            <td class="px-4 py-2">المتوسط</td>
-                            <td class="px-4 py-2">6 أشهر</td>
-                            <td class="px-4 py-2">30,000 د.ج</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="flex items-center mt-4">
-                <input type="checkbox" id="copyTeachers" class="mr-2 rounded text-primary">
-                <label for="copyTeachers">نسخ الأساتذة المرتبطين بهذه البرامج</label>
-            </div>
-        </div>
-
-        <div id="newProgramsSection" class="hidden">
-            <div class="mb-4">
-                <button class="bg-primary px-4 py-2 rounded-lg text-white">
-                    <i class="mr-2 fas fa-plus"></i> إضافة برنامج جديد
-                </button>
-            </div>
-            <p class="text-gray-600">سيتم إضافة واجهة إنشاء البرامج الجديدة هنا</p>
-        </div>
-
-        <div class="flex justify-between mt-8">
-            <button type="button" onclick="prevStep(1)" class="hover:bg-gray-100 px-6 py-2 border border-gray-300 rounded-lg text-gray-700">
-                <i class="fa-arrow-right mr-2 fas"></i> السابق
-            </button>
-            <button type="button" onclick="nextStep(3)" class="bg-primary hover:bg-blue-700 px-6 py-2 rounded-lg text-white">
-                التالي <i class="fa-arrow-left ml-2 fas"></i>
-            </button>
-        </div>
+        </form>
     </div>
-
-    <!-- Step 3: Assign Teachers -->
-    <div id="step3" class="hidden step-content">
-        <h3 class="mb-4 font-semibold text-dark text-lg">تعيين الأساتذة</h3>
-
-        <div class="bg-blue-50 mb-6 p-4 border border-blue-200 rounded-lg">
-            <div class="flex items-start space-x-3 space-x-reverse">
-                <i class="mt-1 text-blue-500 fas fa-info-circle"></i>
-                <div>
-                    <p class="font-medium text-dark">سيتم تعيين الأساتذة للبرامج التي اخترتها</p>
-                    <p class="mt-1 text-gray-600 text-sm">يمكنك تعديل التعيينات لاحقاً من لوحة إدارة الأساتذة</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
-            <!-- Program 1 -->
-            <div class="p-4 border border-gray-200 rounded-lg">
-                <h4 class="mb-3 font-medium text-dark">رياضيات - ثانوي</h4>
-
-                <div class="mb-3">
-                    <label class="block mb-1 text-gray-700">الأستاذ الرئيسي</label>
-                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full">
-                        <option value="">اختر أستاذاً</option>
-                        <option>أ. محمد بن عمر</option>
-                        <option>أ. خالد قاسم</option>
-                        <option>أ. سميرة بوعلي</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block mb-1 text-gray-700">أساتذة إضافيون</label>
-                    <select multiple class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full h-auto">
-                        <option>أ. محمد بن عمر</option>
-                        <option>أ. خالد قاسم</option>
-                        <option>أ. سميرة بوعلي</option>
-                        <option>أ. فاطمة الزهراء</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Program 2 -->
-            <div class="p-4 border border-gray-200 rounded-lg">
-                <h4 class="mb-3 font-medium text-dark">علوم تجريبية - ثانوي</h4>
-
-                <div class="mb-3">
-                    <label class="block mb-1 text-gray-700">الأستاذ الرئيسي</label>
-                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full">
-                        <option value="">اختر أستاذاً</option>
-                        <option>أ. محمد بن عمر</option>
-                        <option>أ. خالد قاسم</option>
-                        <option>أ. سميرة بوعلي</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block mb-1 text-gray-700">أساتذة إضافيون</label>
-                    <select multiple class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary w-full h-auto">
-                        <option>أ. محمد بن عمر</option>
-                        <option>أ. خالد قاسم</option>
-                        <option>أ. سميرة بوعلي</option>
-                        <option>أ. فاطمة الزهراء</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex justify-between mt-8">
-            <button type="button" onclick="prevStep(2)" class="hover:bg-gray-100 px-6 py-2 border border-gray-300 rounded-lg text-gray-700">
-                <i class="fa-arrow-right mr-2 fas"></i> السابق
-            </button>
-            <button type="button" onclick="nextStep(4)" class="bg-primary hover:bg-blue-700 px-6 py-2 rounded-lg text-white">
-                التالي <i class="fa-arrow-left ml-2 fas"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Step 4: Import Students -->
-    <div id="step4" class="hidden step-content">
-        <h3 class="mb-4 font-semibold text-dark text-lg">استيراد الطلاب</h3>
-
-        <div class="bg-gray-50 mb-6 p-6 border-2 border-gray-300 border-dashed rounded-lg text-center">
-            <div class="mx-auto w-3/4">
-                <i class="mb-4 text-green-600 text-4xl fas fa-file-excel"></i>
-                <h4 class="mb-2 font-medium text-dark">اسحب وأفلت ملف Excel هنا</h4>
-                <p class="mb-4 text-gray-600">أو</p>
-                <label class="bg-primary hover:bg-blue-700 px-6 py-3 rounded-lg text-white cursor-pointer">
-                    <i class="mr-2 fas fa-upload"></i> اختر ملف
-                    <input type="file" class="hidden" accept=".xlsx,.xls,.csv">
-                </label>
-                <p class="mt-4 text-gray-500 text-sm">يدعم الملفات بصيغة XLSX, XLS أو CSV</p>
-            </div>
-        </div>
-
-        <div class="mb-6 border border-gray-200 rounded-lg overflow-hidden">
-            <table class="w-full">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-4 py-2 font-medium text-dark text-right">الاسم العائلي</th>
-                        <th class="px-4 py-2 font-medium text-dark text-right">الاسم الشخصي</th>
-                        <th class="px-4 py-2 font-medium text-dark text-right">تاريخ الميلاد</th>
-                        <th class="px-4 py-2 font-medium text-dark text-right">المستوى</th>
-                        <th class="px-4 py-2 font-medium text-dark text-right">الحالة</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    <tr>
-                        <td class="px-4 py-2">بن علي</td>
-                        <td class="px-4 py-2">محمد</td>
-                        <td class="px-4 py-2">15/08/2007</td>
-                        <td class="px-4 py-2">الثانية ثانوي</td>
-                        <td class="px-4 py-2 text-green-600">
-                            <i class="fas fa-check-circle"></i> جاهز
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-2">قاسم</td>
-                        <td class="px-4 py-2">آمنة</td>
-                        <td class="px-4 py-2">22/05/2006</td>
-                        <td class="px-4 py-2">الثالثة ثانوي</td>
-                        <td class="px-4 py-2 text-green-600">
-                            <i class="fas fa-check-circle"></i> جاهز
-                        </td>
-                    </tr>
-                    <tr class="bg-red-50">
-                        <td class="px-4 py-2">صالح</td>
-                        <td class="px-4 py-2">يوسف</td>
-                        <td class="px-4 py-2">غير صحيح</td>
-                        <td class="px-4 py-2">-</td>
-                        <td class="px-4 py-2 text-red-600">
-                            <i class="fas fa-exclamation-circle"></i> خطأ
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flex justify-between items-center bg-yellow-50 mb-6 p-4 border border-yellow-200 rounded-lg">
-            <div class="flex items-start space-x-3 space-x-reverse">
-                <i class="mt-1 text-yellow-500 fas fa-exclamation-triangle"></i>
-                <div>
-                    <p class="font-medium text-dark">1 سجل به مشكلة</p>
-                    <p class="mt-1 text-gray-600 text-sm">يجب تصحيح الأخطاء قبل المتابعة</p>
-                </div>
-            </div>
-            <button class="text-primary hover:underline">عرض التفاصيل</button>
-        </div>
-
-        <div class="flex justify-between mt-8">
-            <button type="button" onclick="prevStep(3)" class="hover:bg-gray-100 px-6 py-2 border border-gray-300 rounded-lg text-gray-700">
-                <i class="fa-arrow-right mr-2 fas"></i> السابق
-            </button>
-            <button type="button" class="bg-primary hover:bg-blue-700 px-6 py-2 rounded-lg text-white">
-                <i class="mr-2 fas fa-save"></i> حفظ وبدء السنة
-            </button>
-        </div>
-    </div>
+</div>
 </div>
 
 <script>
-    // Toggle new year wizard
-    document.getElementById('startNewYearBtn').addEventListener('click', function() {
-        document.getElementById('newYearWizard').classList.toggle('hidden');
-    });
-
-    // Handle program options
-    document.querySelectorAll('input[name="programOption"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'copy') {
-                document.getElementById('copyProgramsSection').classList.remove('hidden');
-                document.getElementById('newProgramsSection').classList.add('hidden');
-            } else {
-                document.getElementById('copyProgramsSection').classList.add('hidden');
-                document.getElementById('newProgramsSection').classList.remove('hidden');
-            }
-        });
-    });
-
-    // Wizard navigation
+    // Step Navigation
     function nextStep(step) {
         document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
         document.getElementById('step' + step).classList.remove('hidden');
         updateStepIndicator(step);
+        if (step === 4) collectStepData();
     }
 
     function prevStep(step) {
@@ -406,26 +403,171 @@
         updateStepIndicator(step);
     }
 
+    // Update step indicator
     function updateStepIndicator(currentStep) {
-        // Reset all steps
-        document.querySelectorAll('.flex-1 .w-8').forEach((el, index) => {
-            if (index < currentStep - 1) {
-                el.classList.remove('bg-gray-200', 'text-gray-600');
-                el.classList.add('bg-primary', 'text-white');
-                el.nextElementSibling.classList.remove('bg-gray-200');
-                el.nextElementSibling.classList.add('bg-primary');
-            } else if (index === currentStep - 1) {
-                el.classList.remove('bg-gray-200', 'text-gray-600');
-                el.classList.add('bg-primary', 'text-white');
-            } else {
-                el.classList.remove('bg-primary', 'text-white');
-                el.classList.add('bg-gray-200', 'text-gray-600');
-                if (el.nextElementSibling) {
-                    el.nextElementSibling.classList.remove('bg-primary');
-                    el.nextElementSibling.classList.add('bg-gray-200');
-                }
+        const steps = document.querySelectorAll('.flex-1 .w-8');
+        steps.forEach((el, index) => {
+            const isCompleted = index < currentStep - 1;
+            const isCurrent = index === currentStep - 1;
+
+            // Update circle
+            el.classList.toggle('border-primary', isCompleted || isCurrent);
+            el.classList.toggle('bg-primary', isCompleted || isCurrent);
+            el.classList.toggle('text-white', isCompleted || isCurrent);
+            el.classList.toggle('border-gray-300', !isCompleted && !isCurrent);
+            el.classList.toggle('bg-white', !isCompleted && !isCurrent);
+            el.classList.toggle('text-gray-400', !isCompleted && !isCurrent);
+
+            // Update line between circles
+            if (el.nextElementSibling) {
+                el.nextElementSibling.classList.toggle('bg-primary', isCompleted);
+                el.nextElementSibling.classList.toggle('bg-gray-200', !isCompleted);
             }
         });
     }
+
+    // Collect data for preview
+    function collectStepData() {
+        // Step 1: Program data
+        const programData = {
+            'اسم البرنامج': document.querySelector('#step1 [name="name"]').value,
+            'نوع البرنامج': document.querySelector('#step1 [name="type"]').value,
+            'تاريخ البدء': document.querySelector('#step1 [name="start_date"]').value,
+            'تاريخ الانتهاء': document.querySelector('#step1 [name="end_date"]').value,
+            'السنة الدراسية': document.querySelector('#step1 [name="academic_year_id"] option:checked').textContent,
+            'المستوى': document.querySelector('#step1 [name="level_id"] option:checked').textContent,
+            'رسوم التسجيل': document.querySelector('#step1 [name="registration_fees"]').value + ' د.ج',
+            'حالة البرنامج': document.querySelector('#step1 [name="is_active"] option:checked').textContent,
+            'الوصف': document.querySelector('#step1 [name="description"]').value || 'لا يوجد وصف'
+        };
+
+        // Step 2: Students
+        let students = [];
+        document.querySelectorAll('#step2 input[name="student_ids[]"]:checked').forEach(cb => {
+            const label = cb.closest('label');
+            const name = label.querySelector('.text-gray-800').innerText;
+            const branch = label.querySelector('.text-gray-500')?.innerText || 'بدون شعبة';
+            students.push(`${name} - ${branch}`);
+        });
+
+        // Step 3: Staff
+        let staff = [];
+        document.querySelectorAll('#step3 input[name="supervisor_ids[]"]:checked').forEach(cb => {
+            const name = cb.closest('label').querySelector('.text-gray-800').innerText;
+            staff.push(`مشرف: ${name}`);
+        });
+        document.querySelectorAll('#step3 input[name="teacher_ids[]"]:checked').forEach(cb => {
+            const name = cb.closest('label').querySelector('.text-gray-800').innerText;
+            staff.push(`أستاذ: ${name}`);
+        });
+        document.querySelectorAll('#step3 input[name="admin_ids[]"]:checked').forEach(cb => {
+            const name = cb.closest('label').querySelector('.text-gray-800').innerText;
+            staff.push(`إداري: ${name}`);
+        });
+        if (staff.length === 0) staff.push('لم يتم اختيار فريق عمل');
+
+        // Update preview lists
+        updatePreviewList('program-data-preview-list', programData);
+        updatePreviewList('students-data-preview-list', students);
+        updatePreviewList('staff-data-preview-list', staff);
+
+        // Fill hidden fields
+        fillHiddenProgramFields();
+    }
+
+    function updatePreviewList(listId, data) {
+        const list = document.getElementById(listId);
+        list.innerHTML = '';
+
+        if (typeof data === 'object' && !Array.isArray(data)) {
+            // For object (program data)
+            Object.entries(data).forEach(([label, value]) => {
+                const li = document.createElement('li');
+                li.className = 'text-sm text-gray-700';
+                li.innerHTML = `<span class="font-medium text-gray-800">${label}:</span> ${value}`;
+                list.appendChild(li);
+            });
+        } else {
+            // For arrays (students, staff)
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'text-sm text-gray-700 flex items-start';
+                li.innerHTML = `<span class="inline-block bg-primary mt-1.5 mr-2 rounded-full w-2 h-2"></span> ${item}`;
+                list.appendChild(li);
+            });
+        }
+    }
+
+    function fillHiddenProgramFields() {
+        document.getElementById('hidden_name').value = document.querySelector('#step1 [name="name"]').value;
+        document.getElementById('hidden_type').value = document.querySelector('#step1 [name="type"]').value;
+        document.getElementById('hidden_start_date').value = document.querySelector('#step1 [name="start_date"]').value;
+        document.getElementById('hidden_end_date').value = document.querySelector('#step1 [name="end_date"]').value;
+        document.getElementById('hidden_academic_year_id').value = document.querySelector('#step1 [name="academic_year_id"]').value;
+        document.getElementById('hidden_level_id').value = document.querySelector('#step1 [name="level_id"]').value;
+        document.getElementById('hidden_registration_fees').value = document.querySelector('#step1 [name="registration_fees"]').value;
+        document.getElementById('hidden_is_active').value = document.querySelector('#step1 [name="is_active"]').value;
+        document.getElementById('hidden_description').value = document.querySelector('#step1 [name="description"]').value;
+
+        // Add hidden inputs for students
+        const hiddenStudentsDiv = document.getElementById('hidden-students');
+        hiddenStudentsDiv.innerHTML = '';
+        document.querySelectorAll('#step2 input[name="student_ids[]"]:checked').forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'student_ids[]';
+            input.value = cb.value;
+            hiddenStudentsDiv.appendChild(input);
+        });
+
+        // Add hidden inputs for staff
+        ['supervisor_ids', 'teacher_ids', 'admin_ids'].forEach(type => {
+            document.querySelectorAll(`#step3 input[name="${type}[]"]:checked`).forEach(cb => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = `${type}[]`;
+                input.value = cb.value;
+                hiddenStudentsDiv.appendChild(input);
+            });
+        });
+    }
+
+    // DOM Ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Branch filter for students
+        const branchFilter = document.getElementById('branchFilter');
+        if (branchFilter) {
+            branchFilter.addEventListener('change', function() {
+                const selectedBranch = this.value;
+                document.querySelectorAll('#students-list label').forEach(label => {
+                    label.style.display = (!selectedBranch || label.getAttribute('data-branch') === selectedBranch) ? '' : 'none';
+                });
+            });
+        }
+
+        // Select/Deselect all students
+        const selectAllBtn = document.getElementById('selectAllStudents');
+        const deselectAllBtn = document.getElementById('deselectAllStudents');
+        if (selectAllBtn && deselectAllBtn) {
+            selectAllBtn.addEventListener('click', () => {
+                document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = true);
+            });
+            deselectAllBtn.addEventListener('click', () => {
+                document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
+            });
+        }
+
+        // Prevent double submit
+        const finalForm = document.getElementById('finalProgramForm');
+        if (finalForm) {
+            finalForm.addEventListener('submit', function(e) {
+                const finalSubmitBtn = document.getElementById('final-submit-btn');
+                if (finalSubmitBtn) {
+                    finalSubmitBtn.disabled = true;
+                    finalSubmitBtn.innerHTML = '<i class="mr-2 fas fa-spinner fa-spin"></i> جاري الحفظ...';
+                }
+            });
+        }
+    });
 </script>
 @endsection

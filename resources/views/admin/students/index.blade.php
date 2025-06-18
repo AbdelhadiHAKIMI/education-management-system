@@ -46,6 +46,14 @@
             <i class="top-3 right-3 absolute text-gray-400 fas fa-search"></i>
         </div>
         <div class="flex space-x-3 space-x-reverse">
+            <form method="GET" class="flex items-center">
+                <select name="branch_id" onchange="this.form.submit()" class="mr-2 px-3 py-2 border border-gray-300 rounded-lg text-gray-700">
+                    <option value="">كل الشعب</option>
+                    @foreach($branches as $branch)
+                    <option value="{{ $branch->id }}" {{ (isset($branchId) && $branchId == $branch->id) ? 'selected' : '' }}>{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </form>
             <select class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700">
                 <option>فرز حسب الأقدم</option>
                 <option>فرز حسب الأحدث</option>
@@ -61,7 +69,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- Students Table -->
 <div class="bg-white shadow-md rounded-lg overflow-hidden">

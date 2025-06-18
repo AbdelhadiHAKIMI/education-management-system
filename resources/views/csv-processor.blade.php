@@ -3,61 +3,30 @@
 @section('title', 'معالج ملفات CSV')
 
 @section('content')
-<div class="py-5 container">
-    <h1 class="mb-4 text-center">معالج ملفات CSV</h1>
+<div class="mx-auto py-8 max-w-4xl container">
+    <h1 class="mb-6 font-bold text-blue-800 text-2xl text-center">معالج ملفات CSV</h1>
 
     @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show">
+    <div class="shadow mb-6 alert alert-success alert-dismissible fade show">
         {{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
 
-    <!-- Branches List -->
-    @isset($branches)
-    <div class="mb-4 card">
-        <div class="bg-info text-white card-header">
-            قائمة أرقام وأسماء الشعب المتاحة
-        </div>
-        <div class="p-2 card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm mb-0">
-                    <thead>
-                        <tr>
-                            <th>رقم الشعبة</th>
-                            <th>اسم الشعبة</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($branches as $branch)
-                        <tr>
-                            <td>{{ $branch->id }}</td>
-                            <td>{{ $branch->name ?? '-' }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-2 text-muted" style="font-size:0.95em;">
-                يرجى استخدام رقم الشعبة الصحيح في ملف CSV.
-            </div>
-        </div>
-    </div>
-    @endisset
-
     <!-- Upload Section -->
-    <div class="mb-4 card">
-        <div class="bg-primary text-white card-header">
+    <div class="bg-white shadow mb-6 border rounded-xl">
+        <div class="bg-gradient-to-l from-indigo-600 to-blue-500 px-4 py-3 rounded-t-xl font-semibold text-white">
             رفع ملف CSV
         </div>
-        <div class="card-body">
+        <div class="p-4">
             <form action="{{ route('csv.upload') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <div class="mb-3">
+                <div class="mb-4">
+                    <label class="font-medium text-gray-700 form-label">اختر ملف CSV</label>
                     <input class="form-control" type="file" name="csv_file" required>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">المستوى الدراسي (سيتم تطبيقه على جميع الطلاب):</label>
+                <div class="mb-4">
+                    <label class="font-medium text-gray-700 form-label">المستوى الدراسي (سيتم تطبيقه على جميع الطلاب):</label>
                     <select class="form-select" name="level_id" required>
                         <option value="">اختر المستوى</option>
                         @isset($levels)
@@ -67,78 +36,66 @@
                         @endisset
                     </select>
                 </div>
-                <div class="mb-3 row">
-                    <div class="col-md-6">
-                        <label class="form-label">الشعبة (اختر رقم الشعبة الصحيح):</label>
-                        <select class="form-select" disabled>
-                            @isset($branches)
-                            @foreach($branches as $branch)
-                            <option value="{{ $branch->id }}">{{ $branch->name ?? '-' }} ({{ $branch->id }})</option>
-                            @endforeach
-                            @endisset
-                        </select>
-                        <div class="text-muted form-text">استخدم رقم الشعبة هذا في ملف CSV.</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">مستوى حفظ القرآن:</label>
-                        <select class="form-select" disabled>
-                            <option value="مستظهر">مستظهر</option>
-                            <option value="خاتم">خاتم</option>
-                        </select>
-                        <div class="text-muted form-text">استخدم أحد هذه القيم في ملف CSV.</div>
-                    </div>
+                <div class="mb-4 row">
+
+
                 </div>
-                <button type="submit" class="btn btn-primary">رفع الملف</button>
+                <button type="submit" class="shadow-sm mt-4 py-2 w-100 btn btn-gradient-blue fw-bold">
+                    <i class="ms-2 fas fa-upload"></i> رفع الملف
+                </button>
             </form>
         </div>
     </div>
 
     <!-- Download Prototype Button -->
-    <div class="mb-4 text-center">
-        <a href="{{ route('csv.prototype') }}" class="btn-outline-secondary btn">
-            تحميل نموذج CSV للطلاب
-        </a>
-        <a href="{{ route('csv.prototype.xlsx') }}" class="ms-2 btn-outline-success btn">
-            تحميل نموذج Excel للطلاب مع قوائم منسدلة
-        </a>
-        <div class="mt-2 text-muted" style="font-size: 0.95em;">
+    <div class="flex flex-col items-center mb-6 text-center">
+        <div class="flex sm:flex-row flex-col justify-center gap-3 mb-2">
+            <a href="{{ route('csv.prototype') }}"
+                class="flex items-center gap-2 shadow-sm px-5 py-2 rounded-pill btn-outline-secondary btn btn-lg">
+                <i class="fas fa-download"></i>
+                تحميل نموذج CSV للطلاب
+            </a>
+            <a href="{{ route('csv.prototype.xlsx') }}"
+                class="flex items-center gap-2 shadow-sm px-5 py-2 rounded-pill btn-outline-success btn btn-lg">
+                <i class="fas fa-file-excel"></i>
+                تحميل نموذج Excel للطلاب مع قوائم منسدلة
+            </a>
+        </div>
+        <div class="bg-gray-50 mx-auto mt-2 px-3 py-2 rounded-lg w-fit text-muted text-base">
             قم بتحميل النموذج، ثم املأه بمعلومات الطلاب، ثم ارفع الملف هنا.
         </div>
     </div>
 
     @if(isset($headers))
     <!-- Filter Section -->
-    <div class="filter-section">
-        <form action="{{ route('csv.show') }}" method="GET">
-            <div class="row">
-                <div class="col-md-4">
-                    <select class="form-select" name="filter_type">
-                        <option value="none" {{ (isset($filterType) && $filterType == 'none') ? 'selected' : '' }}>بدون تصفية
-                        </option>
-                        <option value="first_letter" {{ (isset($filterType) && $filterType == 'first_letter') ? 'selected' : '' }}>الحرف الأول من الاسم
-                        </option>
-                        <option value="name" {{ (isset($filterType) && $filterType == 'name') ? 'selected' : '' }}>بحث بالاسم
-                        </option>
-                        <option value="branch" {{ (isset($filterType) && $filterType == 'branch') ? 'selected' : '' }}>الشعبة
-                        </option>
-                        <option value="rate" {{ (isset($filterType) && $filterType == 'rate') ? 'selected' : '' }}>المعدل الأعلى من
-                        </option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <input type="text" class="form-control" name="filter_value" placeholder="أدخل قيمة التصفية"
-                        value="{{ isset($filterValue) ? $filterValue : '' }}">
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="w-100 btn btn-primary">تصفية</button>
-                </div>
+    <div class="bg-white shadow mb-4 p-4 border rounded-xl">
+        <form action="{{ route('csv.show') }}" method="GET" class="align-items-end row g-3">
+            <div class="col-md-4">
+                <label class="text-gray-700 form-label">نوع التصفية</label>
+                <select class="form-select" name="filter_type">
+                    <option value="none" {{ (isset($filterType) && $filterType == 'none') ? 'selected' : '' }}>بدون تصفية</option>
+                    <option value="first_letter" {{ (isset($filterType) && $filterType == 'first_letter') ? 'selected' : '' }}>الحرف الأول من الاسم</option>
+                    <option value="name" {{ (isset($filterType) && $filterType == 'name') ? 'selected' : '' }}>بحث بالاسم</option>
+                    <option value="branch" {{ (isset($filterType) && $filterType == 'branch') ? 'selected' : '' }}>الشعبة</option>
+                    <option value="rate" {{ (isset($filterType) && $filterType == 'rate') ? 'selected' : '' }}>المعدل الأعلى من</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="text-gray-700 form-label">قيمة التصفية</label>
+                <input type="text" class="form-control" name="filter_value" placeholder="أدخل قيمة التصفية"
+                    value="{{ isset($filterValue) ? $filterValue : '' }}">
+            </div>
+            <div class="d-grid col-md-2">
+                <button type="submit" class="shadow-sm btn btn-gradient-blue fw-bold">
+                    <i class="ms-2 fas fa-filter"></i>تصفية
+                </button>
             </div>
         </form>
     </div>
 
     <!-- Data Display -->
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
+    <div class="table-responsive bg-white shadow border rounded-xl">
+        <table class="table table-bordered table-striped mb-0 align-middle">
             <thead class="table-primary">
                 <tr>
                     @foreach($headers as $header)
@@ -165,10 +122,34 @@
 
     <!-- Download Button -->
     <div class="mt-4 text-center">
-        <a href="{{ route('csv.download') }}" class="btn btn-success">
-            تحميل البيانات
+        <a href="{{ route('csv.download') }}" class="shadow-sm rounded-pill btn btn-gradient-green btn-lg">
+            <i class="ms-2 fas fa-file-csv"></i>تحميل البيانات
         </a>
     </div>
     @endif
 </div>
+
+<style>
+    .btn-gradient-blue {
+        background: linear-gradient(to left, #6366f1, #2563eb);
+        color: #fff !important;
+        border: none;
+    }
+
+    .btn-gradient-blue:hover {
+        background: linear-gradient(to left, #4338ca, #1d4ed8);
+        color: #fff !important;
+    }
+
+    .btn-gradient-green {
+        background: linear-gradient(to left, #22c55e, #16a34a);
+        color: #fff !important;
+        border: none;
+    }
+
+    .btn-gradient-green:hover {
+        background: linear-gradient(to left, #15803d, #22c55e);
+        color: #fff !important;
+    }
+</style>
 @endsection
