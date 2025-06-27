@@ -17,12 +17,6 @@ class Branch extends Model
       return $this->belongsTo(Level::class);
    }
 
-   // If you need to access academic year through level
-   public function academicYear()
-{
-    return $this->through('level')->has('academicYear');
-}
-
    public function subjects()
    {
       return $this->hasMany(Subject::class);

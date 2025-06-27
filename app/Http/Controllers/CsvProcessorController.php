@@ -1,4 +1,5 @@
 <?php
+// Use this version for reliable student uploading from CSV/XLSX
 
 namespace App\Http\Controllers;
 
@@ -10,8 +11,6 @@ use SplTempFileObject;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\Student;
 use App\Models\Branch;
-use App\Models\Level;
-use App\Models\AcademicYear;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
@@ -23,43 +22,37 @@ class CsvProcessorController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-        $establishmentId = $user ? $user->establishment_id : null;
-
-        // FIX: Remove dependency on levels.academic_year_id
-        // Just show all branches and levels if you don't have a direct establishment link
-        $branches = Branch::all(['id', 'name']);
-        $levels = Level::all(['id', 'name']);
+        // Fetch all branches and all levels for the upload form
+        $branches = \App\Models\Branch::all(['id', 'name']);
+        $levels = \App\Models\Level::all(['id', 'name']); // <-- Ensure levels are loaded
 
         return view('csv-processor', compact('branches', 'levels'));
     }
 
     public function upload(Request $request)
     {
-        $user = Auth::user();
-        $establishmentId = $user ? $user->establishment_id : null;
         $request->validate([
             'csv_file' => 'required|file|mimes:csv,txt,xlsx|max:2048',
             'level_id' => 'required|exists:levels,id'
         ]);
-        $levelId = $request->input('level_id');
-        // Get the active academic year for the selected level's establishment
-        $level = \App\Models\Level::find($levelId);
-        $activeAcademicYearId = null;
-        if ($level && $establishmentId && $level->academicYear->establishment_id == $establishmentId) {
-            $activeAcademicYear = AcademicYear::where('establishment_id', $establishmentId)
-                ->where('status', true)
-                ->first();
-            if ($activeAcademicYear) {
-                $activeAcademicYearId = $activeAcademicYear->id;
-            }
-        } else {
-            return back()->with('error', 'المستوى غير متوافق مع المؤسسة.');
-        }
 
+        $levelId = $request->input('level_id');
         $file = $request->file('csv_file');
         $extension = strtolower($file->getClientOriginalExtension());
         $records = [];
+
+        // Get establishment from user
+        $user = Auth::user();
+        $establishmentId = $user ? $user->establishment_id : null;
+
+        // Get the active academic year for this establishment
+        $activeAcademicYear = null;
+        if ($establishmentId) {
+            $activeAcademicYear = \App\Models\AcademicYear::where('establishment_id', $establishmentId)
+                ->where('status', true)
+                ->first();
+        }
+        $activeAcademicYearId = $activeAcademicYear ? $activeAcademicYear->id : null;
 
         $headerMap = [
             'الاسم الكامل' => 'full_name',
@@ -72,23 +65,18 @@ class CsvProcessorController extends Controller
             'مستوى حفظ القرآن (مستظهر أو خاتم فقط)' => 'quran_level',
             'الشعبة' => 'branch_id',
             'الشعبة (اكتب اسم الشعبة وليس رقمها)' => 'branch_id',
-            'القسم الأولي' => 'initial_classroom' // <-- add this line
+            'القسم الأولي' => 'initial_classroom'
         ];
 
-        $branchesList = $establishmentId
-            ? Branch::whereHas('level.academicYear', function ($q) use ($establishmentId) {
-                $q->where('establishment_id', $establishmentId);
-            })->get(['id', 'name'])->keyBy('name')
-            : Branch::all(['id', 'name'])->keyBy('name');
+        $branchesList = \App\Models\Branch::all(['id', 'name'])->keyBy('name');
 
         if ($extension === 'xlsx') {
             // Convert XLSX to CSV in-memory
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getRealPath());
+            $spreadsheet = IOFactory::load($file->getRealPath());
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Csv($spreadsheet);
             $writer->setDelimiter(';');
             $writer->setEnclosure('"');
             $writer->setSheetIndex(0);
-            $csvContent = '';
             ob_start();
             $writer->save('php://output');
             $csvContent = ob_get_clean();
@@ -105,8 +93,9 @@ class CsvProcessorController extends Controller
                         $assoc[$dbField] = mb_trim((string)$row[$arHeader]);
                     }
                 }
+                // Always set level_id from the selection
+                $assoc['level_id'] = $levelId;
                 if (!empty($assoc['full_name']) && array_filter($assoc)) {
-                    $assoc['level_id'] = $levelId; // <-- set level_id for each student
                     $records[] = $assoc;
                 }
             }
@@ -127,8 +116,8 @@ class CsvProcessorController extends Controller
                         $assoc[$dbField] = mb_trim((string)$row[$arHeader]);
                     }
                 }
+                $assoc['level_id'] = $levelId;
                 if (!empty($assoc['full_name']) && array_filter($assoc)) {
-                    $assoc['level_id'] = $levelId; // <-- set level_id for each student
                     $records[] = $assoc;
                 }
             }
@@ -136,8 +125,28 @@ class CsvProcessorController extends Controller
 
         $successfulInserts = 0;
         $skippedRows = [];
+        $debugRows = [];
 
         foreach ($records as $index => $studentData) {
+            // Set academic_year_id if possible (active year for the level's establishment)
+            $level = \App\Models\Level::find($levelId);
+            $academicYearId = null;
+            if ($level && $level->academic_year_id) {
+                $academicYearId = $level->academic_year_id;
+            } else {
+                // fallback: get active academic year for the branch's establishment
+                $branch = null;
+                if (!empty($studentData['branch_id']) && $branchesList->has($studentData['branch_id'])) {
+                    $branch = $branchesList[$studentData['branch_id']];
+                }
+                if ($branch && $branch->level && $branch->level->academic_year_id) {
+                    $academicYearId = $branch->level->academic_year_id;
+                }
+            }
+            if ($academicYearId) {
+                $studentData['academic_year_id'] = $academicYearId;
+            }
+
             if (!empty($studentData['birth_date'])) {
                 try {
                     $date = Carbon::createFromFormat('Y-m-d', $studentData['birth_date']);
@@ -148,6 +157,7 @@ class CsvProcessorController extends Controller
                         $studentData['birth_date'] = $date->format('Y-m-d');
                     } catch (\Exception $e) {
                         $skippedRows[] = "سطر رقم " . ($index + 2) . ": تاريخ الميلاد غير صالح";
+                        $debugRows[] = "Row " . ($index + 2) . ": Invalid birth_date: " . ($studentData['birth_date'] ?? '');
                         continue;
                     }
                 }
@@ -157,32 +167,61 @@ class CsvProcessorController extends Controller
                 $branchName = $studentData['branch_id'];
                 if (!$branchesList->has($branchName)) {
                     $skippedRows[] = "سطر رقم " . ($index + 2) . ": اسم الشعبة غير صحيح";
+                    $debugRows[] = "Row " . ($index + 2) . ": Invalid branch name: " . $branchName;
                     continue;
                 }
                 $studentData['branch_id'] = $branchesList[$branchName]->id;
             }
 
-            if (empty($studentData['full_name']) || empty($studentData['birth_date']) || empty($studentData['branch_id'])) {
-                $skippedRows[] = "سطر رقم " . ($index + 2) . ": بيانات ناقصة";
+            $studentData['level_id'] = $levelId;
+            // Always use the active academic year for the user's establishment
+            if ($activeAcademicYearId) {
+                $studentData['academic_year_id'] = $activeAcademicYearId;
+            } else {
+                $skippedRows[] = "سطر رقم " . ($index + 2) . ": لا توجد سنة دراسية نشطة للمؤسسة.";
+                $debugRows[] = "Row " . ($index + 2) . ": No active academic year for establishment_id=$establishmentId";
                 continue;
             }
 
-            $studentData['level_id'] = $levelId; // <-- ensure level_id is set
-            if ($activeAcademicYearId) {
-                $studentData['academic_year_id'] = $activeAcademicYearId;
-            }
+            // Only allow fillable fields
+            $allowed = [
+                'full_name',
+                'birth_date',
+                'origin_school',
+                'health_conditions',
+                'parent_phone',
+                'student_phone',
+                'quran_level',
+                'branch_id',
+                'initial_classroom',
+                'level_id',
+                'academic_year_id'
+            ];
+            $studentData = array_intersect_key($studentData, array_flip($allowed));
 
             try {
-                Student::create($studentData);
-                $successfulInserts++;
+                $student = Student::create($studentData);
+                if ($student && $student->id) {
+                    $successfulInserts++;
+                } else {
+                    $skippedRows[] = "سطر رقم " . ($index + 2) . ": لم يتم إنشاء الطالب (غير معروف السبب)";
+                    $debugRows[] = "Row " . ($index + 2) . ": Student::create returned null";
+                }
+            } catch (\Illuminate\Database\QueryException $e) {
+                $skippedRows[] = "سطر رقم " . ($index + 2) . ": خطأ في قاعدة البيانات: " . $e->getMessage();
+                $debugRows[] = "Row " . ($index + 2) . ": DB error: " . $e->getMessage();
             } catch (\Exception $e) {
-                $skippedRows[] = "سطر رقم " . ($index + 2) . ": خطأ في الحفظ";
+                $skippedRows[] = "سطر رقم " . ($index + 2) . ": خطأ في الحفظ: " . $e->getMessage();
+                $debugRows[] = "Row " . ($index + 2) . ": General error: " . $e->getMessage();
             }
         }
 
         $message = 'تم رفع الملف بنجاح! عدد الطلاب المضافين: ' . $successfulInserts;
         if (count($skippedRows) > 0) {
             $message .= '<br><br>لم يتم إضافة بعض الطلاب للأسباب التالية:<br>' . implode('<br>', $skippedRows);
+        }
+        if (count($debugRows) > 0) {
+            $message .= '<br><br><strong>تفاصيل تقنية (للمطور):</strong><br>' . implode('<br>', $debugRows);
         }
 
         return redirect()->route('csv.show')
@@ -460,6 +499,13 @@ class CsvProcessorController extends Controller
         return response($excelOutput)
             ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    // Add this helper to show the last upload report (call in your blade view if needed)
+    public function uploadReport()
+    {
+        $details = session('csv_upload_details', []);
+        return view('csv-upload-report', compact('details'));
     }
 }
 

@@ -89,17 +89,16 @@ class StaffController extends Controller
             ]);
         }
 
-        $academicYearId = null;
-        if ($validated['type'] === 'مؤطر دراسي' && isset($validated['branch_id'])) {
-            $branch = Branch::with('level')->find($validated['branch_id']);
-            if ($branch && $branch->level) {
-                $academicYearId = $branch->level->academic_year_id;
-            }
-        } else {
-            $currentAcademicYear = AcademicYear::where('establishment_id', Auth::user()->establishment_id)
-                ->where('is_current', true)
-                ->first();
-            $academicYearId = $currentAcademicYear ? $currentAcademicYear->id : null;
+        // Always get the active academic year for this establishment
+        $currentAcademicYear = AcademicYear::where('establishment_id', Auth::user()->establishment_id)
+            ->where('status', true)
+            ->first();
+
+        $academicYearId = $currentAcademicYear ? $currentAcademicYear->id : null;
+
+        // If no active academic year, throw a validation error
+        if (!$academicYearId) {
+            return back()->withErrors(['academic_year_id' => 'لا توجد سنة دراسية نشطة لهذه المؤسسة'])->withInput();
         }
 
         $staff = Staff::create([
@@ -132,7 +131,7 @@ class StaffController extends Controller
 
         // Get counts for sidebar navigation
         $establishmentId = Auth::user()->establishment_id;
-        $studentCount = Student::where('establishment_id', $establishmentId)->count();
+        $studentCount = \App\Models\Student::count(); // FIX: Remove establishment_id filter
         $staffCount = Staff::where('establishment_id', $establishmentId)->count();
 
         return view('admin.staffs.show', compact('staff', 'studentCount', 'staffCount'));
@@ -145,14 +144,13 @@ class StaffController extends Controller
         }
 
         $establishmentId = Auth::user()->establishment_id;
-        // FIX: Remove dependency on levels.academic_year_id for branches
         $branches = Branch::all();
         $subjects = \App\Models\Subject::all();
 
         $staff->load('subjects');
 
         // Get counts for sidebar navigation
-        $studentCount = \App\Models\Student::where('establishment_id', $establishmentId)->count();
+        $studentCount = \App\Models\Student::count(); // FIX: Remove establishment_id filter
         $staffCount = \App\Models\Staff::where('establishment_id', $establishmentId)->count();
 
         return view('admin.staffs.edit', compact('staff', 'branches', 'subjects', 'studentCount', 'staffCount'));
@@ -184,19 +182,25 @@ class StaffController extends Controller
             ]);
         }
 
+        // Always get the active academic year for this establishment
         $academicYearId = $staff->academic_year_id;
         if ($validated['type'] === 'مؤطر دراسي' && isset($validated['branch_id'])) {
             $branch = Branch::with('level')->find($validated['branch_id']);
             if ($branch && $branch->level) {
                 $academicYearId = $branch->level->academic_year_id;
             }
-        } else {
-            if (is_null($academicYearId)) {
-                $currentAcademicYear = AcademicYear::where('establishment_id', Auth::user()->establishment_id)
-                    ->where('is_current', true)
-                    ->first();
-                $academicYearId = $currentAcademicYear ? $currentAcademicYear->id : null;
-            }
+        }
+        // If still null, get the active academic year for the staff's establishment
+        if (is_null($academicYearId)) {
+            $currentAcademicYear = AcademicYear::where('establishment_id', $staff->establishment_id)
+                ->where('status', true)
+                ->first();
+            $academicYearId = $currentAcademicYear ? $currentAcademicYear->id : null;
+        }
+
+        // If still null, throw a validation error
+        if (!$academicYearId) {
+            return back()->withErrors(['academic_year_id' => 'لا توجد سنة دراسية نشطة لهذه المؤسسة'])->withInput();
         }
 
         $staff->update([

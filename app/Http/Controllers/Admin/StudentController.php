@@ -55,7 +55,40 @@ class StudentController extends Controller
             'level_id' => 'required|exists:levels,id',
             // Add other validation rules as needed
         ]);
-        Student::create($request->all());
+
+        $user = Auth::user();
+        $establishmentId = $user ? $user->establishment_id : null;
+        $activeAcademicYear = null;
+        if ($establishmentId) {
+            $activeAcademicYear = \App\Models\AcademicYear::where('establishment_id', $establishmentId)
+                ->where('status', true)
+                ->first();
+        }
+
+        $data = $request->all();
+        if ($activeAcademicYear) {
+            $data['academic_year_id'] = $activeAcademicYear->id;
+        } else {
+            return redirect()->back()->withErrors(['academic_year_id' => 'لا توجد سنة دراسية نشطة للمؤسسة.']);
+        }
+
+        // Only allow fillable fields
+        $allowed = [
+            'full_name',
+            'birth_date',
+            'origin_school',
+            'health_conditions',
+            'parent_phone',
+            'student_phone',
+            'quran_level',
+            'branch_id',
+            'initial_classroom',
+            'level_id',
+            'academic_year_id'
+        ];
+        $data = array_intersect_key($data, array_flip($allowed));
+
+        \App\Models\Student::create($data);
         return redirect()->route('admin.students.index')->with('success', 'تم إضافة الطالب بنجاح');
     }
 

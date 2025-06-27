@@ -2,12 +2,14 @@
 
 @section('content')
 @php
+// Defensive: fallback if not passed
 $program = $program ?? null;
 $invitations = $program?->invitations ?? collect();
 $studentsCount = $invitations->count();
 $acceptedCount = $invitations->where('status', 'accepted')->count();
 $rejectedCount = $invitations->where('status', 'rejected')->count();
 $pendingCount = $invitations->where('status', 'invited')->count();
+// Example: If you have staff relations, adjust below
 $supervisors = $program->supervisors ?? collect();
 $teachers = $program->teachers ?? collect();
 $admins = $program->admins ?? collect();
@@ -18,64 +20,29 @@ $staffCount = $supervisors->count() + $teachers->count() + $admins->count();
     <a href="{{ route('admin.programs.index') }}" class="inline-block bg-gray-200 hover:bg-gray-300 mb-4 px-4 py-2 rounded font-semibold text-gray-700">
         <i class="fa-arrow-right fas"></i> رجوع
     </a>
-    <h1 class="mb-4 font-bold text-gray-800 text-2xl">تعديل البرنامج: {{ $program?->name ?? '-' }}</h1>
+    <h1 class="mb-4 font-bold text-gray-800 text-2xl">عرض البرنامج: {{ $program?->name ?? '-' }}</h1>
 
-    <!-- Program Edit Form -->
-    <form method="POST" action="{{ route('admin.programs.update', $program->id) }}">
-        @csrf
-        @method('PUT')
-        <div class="bg-white shadow mb-6 p-4 rounded-lg">
-            <h2 class="mb-2 font-semibold text-primary text-lg">معلومات البرنامج</h2>
-            <div class="gap-4 grid grid-cols-1 md:grid-cols-2 text-gray-700">
-                <div>
-                    <label class="block mb-1 font-medium text-gray-700 text-sm">اسم البرنامج</label>
-                    <input type="text" name="name" value="{{ old('name', $program->name) }}" class="px-4 py-2.5 border border-gray-300 rounded-lg w-full" required>
-                </div>
-                <div>
-                    <label class="block mb-1 font-medium text-gray-700 text-sm">الوصف</label>
-                    <input type="text" name="description" value="{{ old('description', $program->description) }}" class="px-4 py-2.5 border border-gray-300 rounded-lg w-full">
-                </div>
-                <div>
-                    <label class="block mb-1 font-medium text-gray-700 text-sm">تاريخ البدء</label>
-                    <input type="date" name="start_date" value="{{ old('start_date', $program->start_date) }}" class="px-4 py-2.5 border border-gray-300 rounded-lg w-full" required>
-                </div>
-                <div>
-                    <label class="block mb-1 font-medium text-gray-700 text-sm">تاريخ الانتهاء</label>
-                    <input type="date" name="end_date" value="{{ old('end_date', $program->end_date) }}" class="px-4 py-2.5 border border-gray-300 rounded-lg w-full" required>
-                </div>
-                <div>
-                    <label class="block mb-1 font-medium text-gray-700 text-sm">السنة الدراسية</label>
-                    <select name="academic_year_id" class="px-4 py-2.5 border border-gray-300 rounded-lg w-full" required>
-                        @foreach($academicYears as $year)
-                        <option value="{{ $year->id }}" {{ $program->academic_year_id == $year->id ? 'selected' : '' }}>{{ $year->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block mb-1 font-medium text-gray-700 text-sm">المستوى</label>
-                    <select name="level_id" class="px-4 py-2.5 border border-gray-300 rounded-lg w-full" required>
-                        @foreach($levels as $level)
-                        <option value="{{ $level->id }}" {{ $program->level_id == $level->id ? 'selected' : '' }}>{{ $level->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block mb-1 font-medium text-gray-700 text-sm">رسوم التسجيل</label>
-                    <input type="number" name="registration_fees" value="{{ old('registration_fees', $program->registration_fees) }}" class="px-4 py-2.5 border border-gray-300 rounded-lg w-full" required>
-                </div>
-                <div>
-                    <label class="block mb-1 font-medium text-gray-700 text-sm">الحالة</label>
-                    <select name="is_active" class="px-4 py-2.5 border border-gray-300 rounded-lg w-full">
-                        <option value="1" {{ $program->is_active ? 'selected' : '' }}>نشط</option>
-                        <option value="0" {{ !$program->is_active ? 'selected' : '' }}>غير نشط</option>
-                    </select>
-                </div>
+    <!-- Program Info Card -->
+    <div class="bg-white shadow mb-6 p-4 rounded-lg">
+        <h2 class="mb-2 font-semibold text-primary text-lg">معلومات البرنامج</h2>
+        <div class="gap-4 grid grid-cols-1 md:grid-cols-2 text-gray-700">
+            <div><strong>الوصف:</strong> {{ $program?->description ?? '-' }}</div>
+            <div><strong>الفترة:</strong> {{ $program?->start_date }} إلى {{ $program?->end_date }}</div>
+            <div><strong>السنة الدراسية:</strong> {{ $program?->academicYear?->name ?? '-' }}</div>
+            <div><strong>المستوى:</strong> {{ $program?->level?->name ?? '-' }}</div>
+            <div><strong>رسوم التسجيل:</strong> {{ number_format($program?->registration_fees ?? 0) }} د.ج</div>
+            <div>
+                <strong>الحالة:</strong>
+                @if($program?->is_active)
+                <span class="font-semibold text-green-600">نشط</span>
+                @else
+                <span class="font-semibold text-red-600">غير نشط</span>
+                @endif
             </div>
-            <div class="mt-4">
-                <button type="submit" class="bg-primary hover:bg-primary-dark px-6 py-2 rounded-lg font-semibold text-white">حفظ التعديلات</button>
-            </div>
+            <div><strong>أنشئ بواسطة:</strong> {{ $program?->creator?->name ?? '-' }}</div>
+            <div><strong>تاريخ الإنشاء:</strong> {{ $program?->created_at?->format('Y-m-d H:i') ?? '-' }}</div>
         </div>
-    </form>
+    </div>
 
     <!-- Statistics -->
     <div class="gap-4 grid grid-cols-1 md:grid-cols-4 mb-6">
@@ -132,7 +99,7 @@ $staffCount = $supervisors->count() + $teachers->count() + $admins->count();
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="py-4 text-gray-500 text-center">لا يوجد طلاب مدعوين.</td>
+                        <td colspan="6" class="py-4 text-gray-500 text-center">لا يوجد طلاب مدعوون.</td>
                     </tr>
                     @endforelse
                 </tbody>

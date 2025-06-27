@@ -39,4 +39,5 @@ class Program extends Model
    {
       return $this->hasMany(\App\Models\ProgramInvitation::class, 'program_id');
    }
+
 }

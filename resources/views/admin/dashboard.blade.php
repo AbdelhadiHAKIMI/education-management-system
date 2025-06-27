@@ -42,6 +42,27 @@
         </div>
 
         <!-- Stats Cards -->
+        @php
+        use App\Models\Student;
+        use App\Models\Program;
+        // Get active academic year for current user
+        $user = Auth::user();
+        $activeAcademicYear = null;
+        $activeAcademicYearId = null;
+        if ($user && $user->establishment_id) {
+        $activeAcademicYear = \App\Models\AcademicYear::where('establishment_id', $user->establishment_id)
+        ->where('status', true)
+        ->first();
+        $activeAcademicYearId = $activeAcademicYear ? $activeAcademicYear->id : null;
+        }
+        // Dynamic stats for active academic year only
+        $studentsCount = $activeAcademicYearId
+        ? Student::where('academic_year_id', $activeAcademicYearId)->count()
+        : 0;
+        $activeProgramsCount = $activeAcademicYearId
+        ? Program::where('academic_year_id', $activeAcademicYearId)->where('is_active', true)->count()
+        : 0;
+        @endphp
         <div class="gap-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <div class="flex flex-col gap-2 bg-white shadow p-6 border-t-4 border-blue-500 rounded-lg">
                 <div class="flex items-center gap-3">
@@ -50,7 +71,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500 text-sm">الطلاب المسجلين</p>
-                        <h3 class="font-bold text-2xl">{{ $studentsCount ?? 0 }}</h3>
+                        <h3 class="font-bold text-2xl">{{ $studentsCount }}</h3>
                     </div>
                 </div>
                 <p class="mt-2 text-green-500 text-xs"><i class="fas fa-arrow-up"></i> 8% عن الشهر الماضي</p>
@@ -62,7 +83,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500 text-sm">البرامج النشطة</p>
-                        <h3 class="font-bold text-2xl">{{ \App\Models\Program::where('is_active', true)->count() }}</h3>
+                        <h3 class="font-bold text-2xl">{{ $activeProgramsCount }}</h3>
                     </div>
                 </div>
                 <p class="mt-2 text-green-500 text-xs"><i class="fas fa-arrow-up"></i> 2 برامج جديدة</p>
@@ -74,7 +95,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500 text-sm">المدفوعات الشهرية</p>
-                        <h3 class="font-bold text-2xl">2,450,000 د.ج</h3>
+                        <h3 class="font-bold text-2xl">-</h3>
                     </div>
                 </div>
                 <p class="mt-2 text-red-500 text-xs"><i class="fas fa-arrow-down"></i> 12% عن الشهر الماضي</p>
@@ -86,7 +107,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500 text-sm">نسبة الحضور</p>
-                        <h3 class="font-bold text-2xl">89%</h3>
+                        <h3 class="font-bold text-2xl">-</h3>
                     </div>
                 </div>
                 <p class="mt-2 text-green-500 text-xs"><i class="fas fa-arrow-up"></i> 5% عن الأسبوع الماضي</p>
@@ -95,8 +116,27 @@
 
         <!-- Programs Section -->
         @php
-        use App\Models\Program;
-        $programs = Program::orderByDesc('is_active')->orderByDesc('start_date')->take(4)->get();
+        // Get current user establishment and active academic year
+        $user = Auth::user();
+        $activeAcademicYear = null;
+        $activeAcademicYearId = null;
+        $programs = collect();
+
+        if ($user && $user->establishment_id) {
+        $activeAcademicYear = \App\Models\AcademicYear::where('establishment_id', $user->establishment_id)
+        ->where('status', true)
+        ->first();
+        $activeAcademicYearId = $activeAcademicYear ? $activeAcademicYear->id : null;
+        }
+
+        if ($activeAcademicYearId) {
+        // Only filter by academic_year_id, since programs table does NOT have establishment_id
+        $programs = Program::where('academic_year_id', $activeAcademicYearId)
+        ->orderByDesc('is_active')
+        ->orderByDesc('start_date')
+        ->take(4)
+        ->get();
+        }
         @endphp
         <div>
             <h2 class="mb-4 font-semibold text-gray-700 text-lg">البرامج التعليمية الأخيرة</h2>
@@ -126,10 +166,10 @@
                         </div>
                     </div>
                     <div class="flex gap-2 mt-3">
-                        <a href="#" class="flex-1 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded text-blue-600 text-sm text-center transition">
+                        <a href="{{ route('admin.programs.show', ['program' => $program->id]) }}" class="flex-1 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded text-blue-600 text-sm text-center transition">
                             <i class="mr-1 fas fa-eye"></i> عرض
                         </a>
-                        <a href="#" class="flex-1 bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded text-gray-600 text-sm text-center transition">
+                        <a href="{{ route('admin.programs.edit', ['program' => $program->id]) }}" class="flex-1 bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded text-gray-600 text-sm text-center transition">
                             <i class="mr-1 fas fa-edit"></i> تعديل
                         </a>
                     </div>

@@ -14,8 +14,10 @@ class LevelController extends Controller
     {
         $user = Auth::user();
         $establishmentId = $user->establishment_id;
-        // Remove academic_year_id dependency, just get all levels
-        $academicYears = []; // No academic years if not linked
+        // Fetch academic years for the user's establishment
+        $academicYears = \App\Models\AcademicYear::where('establishment_id', $establishmentId)
+            ->orderByDesc('end_date')
+            ->get();
         $levels = Level::orderByDesc('id')->get();
 
         return view('admin.levels.dashboard', compact('levels', 'academicYears'));
