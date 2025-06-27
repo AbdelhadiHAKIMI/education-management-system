@@ -33,7 +33,7 @@ class ProgramController extends Controller
     }
 
     // Show the form for creating a new program
-    public function create()
+    public function create(Request $request)
     {
         $academicYears = \App\Models\AcademicYear::all();
         $levels = \App\Models\Level::all();
@@ -53,19 +53,43 @@ class ProgramController extends Controller
         $staff = \App\Models\Staff::all();
         $branches = \App\Models\Branch::all();
 
-        return view('admin.programs.create', compact('academicYears', 'levels', 'students', 'staff', 'branches'));
+        // Only allow academic years for the user's establishment
+        $academicYearsForEst = $academicYears->where('establishment_id', $establishmentId);
+
+        // Filtering logic for AJAX staff filter
+        $selectedStaffAcademicYearId = $request->input('staff_academic_year_id');
+        if (!$selectedStaffAcademicYearId) {
+            $selectedStaffAcademicYearId = $activeAcademicYear ? $activeAcademicYear->id : ($academicYearsForEst->first()->id ?? null);
+        }
+        $filteredStaff = $staff->where('academic_year_id', $selectedStaffAcademicYearId);
+        $staffType = $request->input('staff_type');
+        if ($staffType) {
+            $filteredStaff = $filteredStaff->where('type', $staffType);
+        }
+
+        if ($request->ajax() && $request->input('step') == 3) {
+            return view('admin.programs.partials.step3_staff', ['filteredStaff' => $filteredStaff])->render();
+        }
+
+        return view('admin.programs.create', compact(
+            'academicYears',
+            'levels',
+            'students',
+            'staff',
+            'branches',
+            'academicYearsForEst',
+            'selectedStaffAcademicYearId',
+            'filteredStaff'
+        ));
     }
 
     // Store a newly created program in storage
     public function store(Request $request)
     {
-        // Debug: check what is being sent
-        // Remove this after debugging
-        // dd($request->all());
-
         // Validate required fields for the program
         $validated = $request->validate([
             'name' => 'required|string|max:100',
+            // REMOVE 'type' from validation, since the column does not exist in the table
             'description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -78,12 +102,12 @@ class ProgramController extends Controller
 
         DB::beginTransaction();
         try {
-            // Create the program
+            // Only pass fields that exist in the table
             $program = \App\Models\Program::create($validated);
 
             // Create invitations for selected students (bulk insert)
             $studentIds = $request->input('student_ids', []);
-            if (!empty($studentIds) && is_array($studentIds)) {
+            if (is_array($studentIds) && count($studentIds) > 0) {
                 $now = now();
                 $invitations = [];
                 foreach ($studentIds as $studentId) {
@@ -101,8 +125,51 @@ class ProgramController extends Controller
                 \App\Models\ProgramInvitation::insert($invitations);
             }
 
+            // Fill program_staff table
+            $programStaff = [];
+            $now = now();
+            $supervisorIds = $request->input('supervisor_ids', []);
+            $teacherIds = $request->input('teacher_ids', []);
+            $adminIds = $request->input('admin_ids', []);
+
+            foreach ((array)$supervisorIds as $staffId) {
+                if ($staffId) {
+                    $programStaff[] = [
+                        'program_id' => $program->id,
+                        'staff_id' => $staffId,
+                        'assigned_at' => $now,
+                        'is_active' => true,
+                        // REMOVE 'created_at' and 'updated_at'
+                    ];
+                }
+            }
+            foreach ((array)$teacherIds as $staffId) {
+                if ($staffId) {
+                    $programStaff[] = [
+                        'program_id' => $program->id,
+                        'staff_id' => $staffId,
+                        'assigned_at' => $now,
+                        'is_active' => true,
+                        // REMOVE 'created_at' and 'updated_at'
+                    ];
+                }
+            }
+            foreach ((array)$adminIds as $staffId) {
+                if ($staffId) {
+                    $programStaff[] = [
+                        'program_id' => $program->id,
+                        'staff_id' => $staffId,
+                        'assigned_at' => $now,
+                        'is_active' => true,
+                        // REMOVE 'created_at' and 'updated_at'
+                    ];
+                }
+            }
+            if (!empty($programStaff)) {
+                \App\Models\ProgramStaff::insert($programStaff);
+            }
+
             DB::commit();
-            // Redirect to create page instead of edit page
             return redirect()->route('admin.programs.index')
                 ->with('success', 'تم إنشاء البرنامج بنجاح. يمكنك الآن إضافة برنامج جديد.');
         } catch (\Exception $e) {
@@ -134,18 +201,20 @@ class ProgramController extends Controller
     public function update(Request $request, Program $program)
     {
         $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:100',
+            'name' => 'required|string|max:100',
             'description' => 'nullable|string',
-            'start_date' => 'sometimes|required|date',
-            'end_date' => 'sometimes|required|date|after_or_equal:start_date',
-            'academic_year_id' => 'sometimes|required|exists:academic_years,id',
-            'registration_fees' => 'sometimes|required|numeric|min:0',
-            'is_active' => 'boolean',
-            'created_by_id' => 'sometimes|required|exists:users,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'academic_year_id' => 'required|exists:academic_years,id',
+            'level_id' => 'required|exists:levels,id',
+            'registration_fees' => 'required|numeric|min:0',
+            'is_active' => 'required|boolean',
         ]);
 
         $program->update($validated);
-        return response()->json($program);
+
+        return redirect()->route('admin.programs.edit', $program->id)
+            ->with('success', 'تم تحديث معلومات البرنامج بنجاح.');
     }
 
     // Remove the specified program from storage
@@ -267,7 +336,7 @@ class ProgramController extends Controller
     public function updateInvitationStatus(Request $request, $invitationId)
     {
         $request->validate([
-            'status' => 'required|in:invited,accepted,rejected'
+            'status' => 'required|in:invited,accepted,declined,waiting_list'
         ]);
         $invitation = \App\Models\ProgramInvitation::findOrFail($invitationId);
         $invitation->status = $request->input('status');
@@ -302,7 +371,7 @@ class ProgramController extends Controller
         $html = '<table><tr><th>#</th><th>اسم الطالب</th><th>الشعبة</th></tr>';
         foreach ($invitations as $i => $inv) {
             $html .= '<tr>';
-            $html .= '<td>' . ($i+1) . '</td>';
+            $html .= '<td>' . ($i + 1) . '</td>';
             $html .= '<td>' . ($inv->student->full_name ?? '-') . '</td>';
             $html .= '<td>' . ($inv->student->branch->name ?? '-') . '</td>';
             $html .= '</tr>';
@@ -313,5 +382,6 @@ class ProgramController extends Controller
             'html' => $html
         ]);
     }
-
 }
+
+

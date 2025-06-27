@@ -9,10 +9,11 @@ $studentsCount = $invitations->count();
 $acceptedCount = $invitations->where('status', 'accepted')->count();
 $rejectedCount = $invitations->where('status', 'rejected')->count();
 $pendingCount = $invitations->where('status', 'invited')->count();
-// Example: If you have staff relations, adjust below
-$supervisors = $program->supervisors ?? collect();
-$teachers = $program->teachers ?? collect();
-$admins = $program->admins ?? collect();
+
+// Fetch staff from program_staff table using eager loading
+$supervisors = $program?->supervisors?->map->staff->filter() ?? collect();
+$teachers = $program?->teachers?->map->staff->filter() ?? collect();
+$admins = $program?->admins?->map->staff->filter() ?? collect();
 $staffCount = $supervisors->count() + $teachers->count() + $admins->count();
 @endphp
 
@@ -99,7 +100,7 @@ $staffCount = $supervisors->count() + $teachers->count() + $admins->count();
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="py-4 text-gray-500 text-center">لا يوجد طلاب مدعوون.</td>
+                        <td colspan="6" class="py-4 text-gray-500 text-center">لا يوجد طلاب مدعوين.</td>
                     </tr>
                     @endforelse
                 </tbody>

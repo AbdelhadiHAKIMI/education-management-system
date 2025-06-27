@@ -14,6 +14,16 @@ if (!isset($step2)) $step2 = [];
 if (!isset($step3)) $step3 = [];
 @endphp
 
+@if($errors->any())
+<div class="alert alert-danger">
+    <ul>
+        @foreach($errors->all() as $error)
+        <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <div class="mx-auto px-2 sm:px-4 py-6 sm:py-8 max-w-6xl">
     <!-- Header -->
     <div class="flex md:flex-row flex-col justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
@@ -117,11 +127,8 @@ if (!isset($step3)) $step3 = [];
                 <div>
                     <label class="block mb-1 font-medium text-gray-700 text-sm">السنة الدراسية *</label>
                     @php
-                    // Get the user's establishment ID
                     $userEstablishmentId = auth()->user()->establishment_id ?? null;
-                    // Get all academic years for the user's establishment
                     $academicYearsForEst = $academicYears->where('establishment_id', $userEstablishmentId);
-                    // Get the active academic year for the user's establishment
                     $activeAcademicYear = $academicYearsForEst->where('status', true)->first();
                     @endphp
                     <select name="academic_year_id"
@@ -259,45 +266,30 @@ if (!isset($step3)) $step3 = [];
             تعيين الفريق العامل
         </h3>
 
-        <div class="space-y-6 sm:space-y-8">
-            <!-- Supervisors -->
-            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
-                <h4 class="mb-3 font-medium text-gray-800 text-md">المشرفون</h4>
-                <div class="gap-2 sm:gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach($staff as $s)
-                    <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
-                        <input type="checkbox" name="supervisor_ids[]" value="{{ $s->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
-                        <span class="ml-3 text-gray-800 text-sm">{{ $s->full_name }}</span>
-                    </label>
-                    @endforeach
-                </div>
-            </div>
+        @php
+        $userEstablishmentId = auth()->user()->establishment_id ?? null;
+        $academicYearsForEst = $academicYears->where('establishment_id', $userEstablishmentId);
+        @endphp
+        <form id="staff-filter-form" class="flex flex-wrap items-center gap-4 mb-4" onsubmit="return false;">
+            <label class="font-medium text-gray-700 text-sm">السنة الدراسية:</label>
+            <select name="staff_academic_year_id" id="staff_academic_year_id" class="px-3 py-2 border rounded">
+                @foreach($academicYearsForEst as $year)
+                <option value="{{ $year->id }}" {{ (isset($selectedStaffAcademicYearId) && $selectedStaffAcademicYearId == $year->id) ? 'selected' : '' }}>
+                    {{ $year->name }}
+                </option>
+                @endforeach
+            </select>
+            <label class="font-medium text-gray-700 text-sm">نوع المؤطر:</label>
+            <select name="staff_type" id="staff_type" class="px-3 py-2 border rounded">
+                <option value="">الكل</option>
+                <option value="إداري" @if(request('staff_type')=='إداري' ) selected @endif>إداري</option>
+                <option value="مؤطر دراسي" @if(request('staff_type')=='مؤطر دراسي' ) selected @endif>مؤطر دراسي</option>
+                <option value="خدمات" @if(request('staff_type')=='خدمات' ) selected @endif>خدمات</option>
+            </select>
+        </form>
 
-            <!-- Teachers -->
-            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
-                <h4 class="mb-3 font-medium text-gray-800 text-md">الأساتذة</h4>
-                <div class="gap-2 sm:gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach($staff as $s)
-                    <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
-                        <input type="checkbox" name="teacher_ids[]" value="{{ $s->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
-                        <span class="ml-3 text-gray-800 text-sm">{{ $s->full_name }}</span>
-                    </label>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- Admins -->
-            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
-                <h4 class="mb-3 font-medium text-gray-800 text-md">الإداريون</h4>
-                <div class="gap-2 sm:gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach($staff as $s)
-                    <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
-                        <input type="checkbox" name="admin_ids[]" value="{{ $s->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
-                        <span class="ml-3 text-gray-800 text-sm">{{ $s->full_name }}</span>
-                    </label>
-                    @endforeach
-                </div>
-            </div>
+        <div id="staff-step-content">
+            @include('admin.programs.partials.step3_staff', ['filteredStaff' => $filteredStaff])
         </div>
 
         <!-- Navigation -->
@@ -568,6 +560,98 @@ if (!isset($step3)) $step3 = [];
                 }
             });
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        function refreshStaffStep() {
+            const yearId = document.getElementById('staff_academic_year_id').value;
+            const staffType = document.getElementById('staff_type').value;
+            fetch("{{ route('admin.programs.create') }}?step=3&staff_academic_year_id=" + yearId + "&staff_type=" + encodeURIComponent(staffType), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('staff-step-content').innerHTML = html;
+                    syncStaffCheckboxes();
+                });
+        }
+
+        document.getElementById('staff_academic_year_id').addEventListener('change', refreshStaffStep);
+        document.getElementById('staff_type').addEventListener('change', refreshStaffStep);
+    });
+
+    let selectedStaff = {
+        supervisor_ids: new Set(),
+        teacher_ids: new Set(),
+        admin_ids: new Set()
+    };
+
+    function syncStaffCheckboxes() {
+        // Save checked staff before re-render
+        document.querySelectorAll('#staff-step-content input[name="supervisor_ids[]"]').forEach(cb => {
+            if (cb.checked) selectedStaff.supervisor_ids.add(cb.value);
+            else selectedStaff.supervisor_ids.delete(cb.value);
+        });
+        document.querySelectorAll('#staff-step-content input[name="teacher_ids[]"]').forEach(cb => {
+            if (cb.checked) selectedStaff.teacher_ids.add(cb.value);
+            else selectedStaff.teacher_ids.delete(cb.value);
+        });
+        document.querySelectorAll('#staff-step-content input[name="admin_ids[]"]').forEach(cb => {
+            if (cb.checked) selectedStaff.admin_ids.add(cb.value);
+            else selectedStaff.admin_ids.delete(cb.value);
+        });
+
+        // After AJAX, restore checked state
+        setTimeout(() => {
+            document.querySelectorAll('#staff-step-content input[name="supervisor_ids[]"]').forEach(cb => {
+                cb.checked = selectedStaff.supervisor_ids.has(cb.value);
+                cb.addEventListener('change', function() {
+                    if (cb.checked) selectedStaff.supervisor_ids.add(cb.value);
+                    else selectedStaff.supervisor_ids.delete(cb.value);
+                });
+            });
+            document.querySelectorAll('#staff-step-content input[name="teacher_ids[]"]').forEach(cb => {
+                cb.checked = selectedStaff.teacher_ids.has(cb.value);
+                cb.addEventListener('change', function() {
+                    if (cb.checked) selectedStaff.teacher_ids.add(cb.value);
+                    else selectedStaff.teacher_ids.delete(cb.value);
+                });
+            });
+            document.querySelectorAll('#staff-step-content input[name="admin_ids[]"]').forEach(cb => {
+                cb.checked = selectedStaff.admin_ids.has(cb.value);
+                cb.addEventListener('change', function() {
+                    if (cb.checked) selectedStaff.admin_ids.add(cb.value);
+                    else selectedStaff.admin_ids.delete(cb.value);
+                });
+            });
+        }, 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        syncStaffCheckboxes();
+
+        function refreshStaffStep() {
+            // Save checked staff before AJAX
+            syncStaffCheckboxes();
+            const yearId = document.getElementById('staff_academic_year_id').value;
+            const staffType = document.getElementById('staff_type').value;
+            fetch("{{ route('admin.programs.create') }}?step=3&staff_academic_year_id=" + yearId + "&staff_type=" + encodeURIComponent(staffType), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('staff-step-content').innerHTML = html;
+                    // Restore checked state after AJAX
+                    syncStaffCheckboxes();
+                });
+        }
+
+        document.getElementById('staff_academic_year_id').addEventListener('change', refreshStaffStep);
+        document.getElementById('staff_type').addEventListener('change', refreshStaffStep);
     });
 </script>
 @endsection

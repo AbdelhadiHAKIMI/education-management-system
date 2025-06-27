@@ -17,7 +17,7 @@ class Program extends Model
       'level_id',
       'registration_fees',
       'is_active',
-      'created_by_id'
+      'created_by_id',
    ];
 
    public function academicYear()
@@ -40,4 +40,29 @@ class Program extends Model
       return $this->hasMany(\App\Models\ProgramInvitation::class, 'program_id');
    }
 
+   public function programStaff()
+   {
+      return $this->hasMany(\App\Models\ProgramStaff::class, 'program_id');
+   }
+
+   public function supervisors()
+   {
+      return $this->programStaff()->whereHas('staff', function ($q) {
+         $q->where('type', 'مؤطر دراسي');
+      })->with('staff');
+   }
+
+   public function teachers()
+   {
+      return $this->programStaff()->whereHas('staff', function ($q) {
+         $q->where('type', 'أستاذ');
+      })->with('staff');
+   }
+
+   public function admins()
+   {
+      return $this->programStaff()->whereHas('staff', function ($q) {
+         $q->where('type', 'إداري');
+      })->with('staff');
+   }
 }
