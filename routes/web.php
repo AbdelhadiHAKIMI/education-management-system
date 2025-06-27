@@ -19,6 +19,7 @@ use App\Models\Branch;
 use App\Models\Subject;
 use App\Http\Controllers\Admin\LevelController;
 use App\Http\Controllers\AcademicYearController;
+use App\Http\Controllers\Admin\ExamSessionController;
 
 
 // Authentication Routes
@@ -159,12 +160,20 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
       ));
    })->name('admin.dashboard');
 
+   // Place the show route BEFORE the update route and restrict {program} to numbers
+   Route::get('/programs/show/{program}', [ProgramController::class, 'show'])->name('admin.programs.show');
+
    // Programs Routes
    Route::get('/programs/index', [ProgramController::class, 'index'])->name('admin.programs.index');
    Route::get('/programs/create', [ProgramController::class, 'create'])->name('admin.programs.create');
    Route::post('/programs/store', [ProgramController::class, 'store'])->name('admin.programs.store');
-   Route::get('/programs/{program}/edit', [ProgramController::class, 'edit'])->name('admin.programs.edit'); // <-- changed
-   Route::get('/programs/show', [ProgramController::class, 'show'])->name('admin.programs.show');
+   Route::get('/programs/{program}/edit', [ProgramController::class, 'edit'])->where('program', '[0-9]+')->name('admin.programs.edit');
+   Route::get('/programs/{program}/show', [ProgramController::class, 'show'])->where('program', '[0-9]+')->name('admin.programs.show');
+   Route::put('/programs/{program}', [ProgramController::class, 'update'])->where('program', '[0-9]+')->name('admin.programs.update');
+
+   // REMOVE this line to avoid route conflict:
+   // Route::get('/programs/{program}', [ProgramController::class, 'show'])->name('admin.programs.show');
+
    Route::get('/programs/attendance', [ProgramController::class, 'attendance'])->name('admin.programs.attendance');
 
 
@@ -220,12 +229,34 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
    // This route needs to be inside the 'admin' prefix so its URL is /admin/branches/{branch}/subjects
    // and it's protected by the 'auth' middleware.
    Route::get('/branches/{branch}/subjects', function (Branch $branch) {
-      // Authorization check: Ensure the branch belongs to the user's establishment
-      if (Auth::check() && $branch->level->academicYear->establishment_id !== Auth::user()->establishment_id) {
+      // Always get the active academic year for the user's establishment
+      $userEstablishmentId = Auth::user()->establishment_id;
+      $activeAcademicYear = \App\Models\AcademicYear::where('establishment_id', $userEstablishmentId)
+         ->where('status', true)
+         ->first();
+
+      // Authorization: Ensure the branch's academic year matches the user's active academic year
+      if (
+         !$activeAcademicYear ||
+         $branch->level->academicYear->establishment_id !== $userEstablishmentId ||
+         $branch->level->academic_year_id !== $activeAcademicYear->id
+      ) {
          abort(403, 'Unauthorized access to branch subjects.');
       }
-      return $branch->subjects()->get(['id', 'name']); // Return only ID and name for efficiency
+
+      // Return as { subjects: [...] } for frontend compatibility
+      return response()->json([
+         'subjects' => $branch->subjects()->get(['id', 'name'])
+      ]);
    })->name('admin.branches.subjects');
+
+   // Update invitation status (AJAX)
+   Route::post('/programs/invitations/{invitation}/status', [ProgramController::class, 'updateInvitationStatus'])
+      ->name('admin.programs.invitations.updateStatus');
+
+   // Filter/search invited students (AJAX)
+   Route::get('/programs/{program}/invitations/filter', [ProgramController::class, 'filterInvitedStudents'])
+      ->name('admin.programs.invitations.filter');
 });
 // **END FIXED STAFF ROUTES**
 
@@ -317,3 +348,29 @@ Route::prefix('admin/programs')->middleware(['auth'])->group(function () {
    Route::get('/wizard/step4', [ProgramController::class, 'wizardStep4'])->name('admin.programs.wizard.step4');
    Route::post('/wizard/step4', [ProgramController::class, 'wizardStep4Post'])->name('admin.programs.wizard.step4.post');
 });
+
+// Exam Results Prototype Upload (admin, filtered)
+Route::get('admin/exam-results/prototype/{establishment_id}/{academic_year_id}', [\App\Http\Controllers\ExamResultController::class, 'adminPrototypeForm'])
+   ->name('admin.exam_results.prototype')
+   ->middleware(['auth', 'admin']);
+
+// Exam Results Dashboard (admin, filtered)
+Route::get('admin/exam-results/dashboard/{establishment_id}/{academic_year_id}/{exam_session_id}', [\App\Http\Controllers\ExamResultController::class, 'adminDashboard'])
+   ->name('admin.exam_results.dashboard')
+   ->middleware(['auth', 'admin']);
+
+// Set active exam session (only one active per establishment at a time)
+Route::post('admin/exam-sessions/{exam_session}/activate', [\App\Http\Controllers\ExamResultController::class, 'activateExamSession'])
+   ->name('admin.exam_sessions.activate')
+   ->middleware(['auth', 'admin']);
+
+// New routes for Exam Results functionality
+Route::middleware(['auth'])->group(function () {
+   Route::get('/exam-results/prototype', [ExamResultController::class, 'prototypeForm'])->name('exam_results.prototype.form');
+   Route::get('/exam-results/dashboard', [ExamResultController::class, 'dashboard'])->name('exam_results.dashboard');
+   Route::post('/exam-sessions/{session}/activate', [App\Http\Controllers\Admin\ExamSessionController::class, 'activate'])->name('exam_sessions.activate');
+});
+
+Route::post('/academic-years', [AcademicYearController::class, 'store'])->name('academic-years.store');
+
+Route::post('/academic-years', [AcademicYearController::class, 'store'])->name('academic-years.store');

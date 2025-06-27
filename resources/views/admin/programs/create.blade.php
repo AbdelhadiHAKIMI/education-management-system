@@ -14,14 +14,14 @@ if (!isset($step2)) $step2 = [];
 if (!isset($step3)) $step3 = [];
 @endphp
 
-<div class="mx-auto px-4 py-8 max-w-6xl">
+<div class="mx-auto px-2 sm:px-4 py-6 sm:py-8 max-w-6xl">
     <!-- Header -->
-    <div class="flex md:flex-row flex-col justify-between items-start md:items-center mb-8">
+    <div class="flex md:flex-row flex-col justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
         <div>
             <h1 class="font-bold text-gray-800 text-2xl">إضافة برنامج جديد</h1>
             <p class="mt-1 text-gray-600">أكمل المعالج لإنشاء برنامج تعليمي جديد</p>
         </div>
-        <a href="{{ route('admin.programs.index') }}" class="flex items-center mt-4 md:mt-0 text-primary hover:text-primary-dark">
+        <a href="{{ route('admin.programs.index') }}" class="flex items-center mt-2 md:mt-0 text-primary hover:text-primary-dark">
             <i class="fa-arrow-left ml-2 fas"></i>
             العودة إلى قائمة البرامج
         </a>
@@ -30,22 +30,22 @@ if (!isset($step3)) $step3 = [];
     <!-- Wizard Container -->
     <div class="bg-white shadow-md border border-gray-100 rounded-xl overflow-hidden">
         <!-- Wizard Header -->
-        <div class="bg-gray-50 p-6 border-gray-100 border-b">
+        <div class="bg-gray-50 p-4 sm:p-6 border-gray-100 border-b">
             <h2 class="font-semibold text-gray-800 text-xl">معالج إنشاء البرنامج</h2>
         </div>
 
         <!-- Steps Indicator -->
-        <div class="px-6 pt-6 pb-2">
+        <div class="px-2 sm:px-6 pt-6 pb-2">
             <div class="relative">
                 <div class="flex justify-between">
                     @foreach([1, 2, 3, 4] as $step)
-                    <div class="z-10 relative flex flex-col items-center">
+                    <div class="z-10 relative flex flex-col flex-1 items-center">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 flex justify-center items-center w-10 h-10 rounded-full border-2 {{ $step == 1 ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-300">
+                            <div class="flex-shrink-0 flex justify-center items-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 {{ $step == 1 ? 'border-primary bg-primary text-white' : 'border-gray-300 bg-white text-gray-400' }} transition-colors duration-300">
                                 {{ $step }}
                             </div>
                             @if($step < 4)
-                                <div class="w-24 h-1 mx-2 {{ $step == 1 ? 'bg-primary' : 'bg-gray-200' }} transition-colors duration-300">
+                                <div class="w-8 sm:w-24 h-1 mx-1 sm:mx-2 {{ $step == 1 ? 'bg-primary' : 'bg-gray-200' }} transition-colors duration-300">
                         </div>
                         @endif
                     </div>
@@ -64,7 +64,7 @@ if (!isset($step3)) $step3 = [];
     </div>
 
     <!-- Step 1: Program Information -->
-    <div id="step1" class="p-6 step-content">
+    <div id="step1" class="p-4 sm:p-6 step-content">
         <h3 class="flex items-center mb-6 font-semibold text-gray-800 text-lg">
             <span class="flex justify-center items-center bg-primary/10 mr-3 rounded-full w-8 h-8 text-primary">1</span>
             معلومات البرنامج الأساسية
@@ -72,7 +72,7 @@ if (!isset($step3)) $step3 = [];
 
         <form method="POST" action="{{ route('admin.programs.store') }}" id="program-create-form">
             @csrf
-            <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
+            <div class="gap-4 sm:gap-6 grid grid-cols-1 md:grid-cols-2">
                 <!-- Name -->
                 <div>
                     <label class="block mb-1 font-medium text-gray-700 text-sm">اسم البرنامج *</label>
@@ -173,7 +173,7 @@ if (!isset($step3)) $step3 = [];
             </div>
 
             <!-- Description -->
-            <div class="mt-6">
+            <div class="mt-4 sm:mt-6">
                 <label class="block mb-1 font-medium text-gray-700 text-sm">وصف البرنامج</label>
                 <textarea name="description" class="px-4 py-2.5 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full transition-all duration-300"
                     rows="3" placeholder="أدخل وصفاً مختصراً للبرنامج">{{ old('description', $wizard['description'] ?? '') }}</textarea>
@@ -183,10 +183,10 @@ if (!isset($step3)) $step3 = [];
             <input type="hidden" name="establishment_id" value="{{ session('establishment')->id ?? (auth()->user()->establishment_id ?? '') }}">
 
             <!-- Navigation -->
-            <div class="flex justify-end space-x-3 mt-8">
+            <div class="flex sm:flex-row flex-col justify-end gap-2 sm:space-x-3 mt-6 sm:mt-8">
                 <button type="button"
                     onclick="nextStep(2)"
-                    class="flex items-center bg-green-600 hover:bg-green-700 shadow px-6 py-2.5 rounded-lg font-semibold text-white transition-colors duration-300">
+                    class="flex justify-center items-center bg-green-600 hover:bg-green-700 shadow px-6 py-2.5 rounded-lg w-full sm:w-auto font-semibold text-white transition-colors duration-300">
                     التالي
                     <i class="fa-arrow-left mr-2 fas"></i>
                 </button>
@@ -195,13 +195,13 @@ if (!isset($step3)) $step3 = [];
     </div>
 
     <!-- Step 2: Students -->
-    <div id="step2" class="hidden p-6 step-content">
+    <div id="step2" class="hidden p-4 sm:p-6 step-content">
         <h3 class="flex items-center mb-6 font-semibold text-gray-800 text-lg">
             <span class="flex justify-center items-center bg-primary/10 mr-3 rounded-full w-8 h-8 text-primary">2</span>
             اختيار الطلاب المشاركين
         </h3>
 
-        <div class="bg-gray-50 mb-6 p-4 rounded-lg">
+        <div class="bg-gray-50 mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg">
             <div class="flex md:flex-row flex-col md:justify-between md:items-center gap-4">
                 <div class="flex-1">
                     <label class="block mb-1 font-medium text-gray-700 text-sm">تصفية حسب الشعبة</label>
@@ -212,18 +212,18 @@ if (!isset($step3)) $step3 = [];
                         @endforeach
                     </select>
                 </div>
-                <div class="flex space-x-2">
-                    <button type="button" id="selectAllStudents" class="bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm transition-colors duration-300">
+                <div class="flex flex-row gap-2">
+                    <button type="button" id="selectAllStudents" class="bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg w-full md:w-auto text-gray-700 text-sm transition-colors duration-300">
                         تحديد الكل
                     </button>
-                    <button type="button" id="deselectAllStudents" class="bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 text-sm transition-colors duration-300">
+                    <button type="button" id="deselectAllStudents" class="bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg w-full md:w-auto text-gray-700 text-sm transition-colors duration-300">
                         إلغاء الكل
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="gap-3 grid grid-cols-1 md:grid-cols-2" id="students-list">
+        <div class="gap-2 sm:gap-3 grid grid-cols-1 md:grid-cols-2" id="students-list">
             @foreach($students as $student)
             <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer" data-branch="{{ $student->branch_id }}">
                 <input type="checkbox" name="student_ids[]" value="{{ $student->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200 student-checkbox" checked>
@@ -236,16 +236,16 @@ if (!isset($step3)) $step3 = [];
         </div>
 
         <!-- Navigation -->
-        <div class="flex justify-between mt-8">
+        <div class="flex sm:flex-row flex-col justify-between gap-2 mt-6 sm:mt-8">
             <button type="button"
                 onclick="prevStep(1)"
-                class="flex items-center bg-gray-200 hover:bg-gray-300 shadow px-6 py-2.5 rounded-lg font-semibold text-gray-800 transition-colors duration-300">
+                class="flex justify-center items-center bg-gray-200 hover:bg-gray-300 shadow px-6 py-2.5 rounded-lg w-full sm:w-auto font-semibold text-gray-800 transition-colors duration-300">
                 <i class="fa-arrow-right mr-2 fas"></i>
                 السابق
             </button>
             <button type="button"
                 onclick="nextStep(3)"
-                class="flex items-center bg-green-600 hover:bg-green-700 shadow px-6 py-2.5 rounded-lg font-semibold text-white transition-colors duration-300">
+                class="flex justify-center items-center bg-green-600 hover:bg-green-700 shadow px-6 py-2.5 rounded-lg w-full sm:w-auto font-semibold text-white transition-colors duration-300">
                 التالي
                 <i class="fa-arrow-left mr-2 fas"></i>
             </button>
@@ -253,17 +253,17 @@ if (!isset($step3)) $step3 = [];
     </div>
 
     <!-- Step 3: Staff -->
-    <div id="step3" class="hidden p-6 step-content">
+    <div id="step3" class="hidden p-4 sm:p-6 step-content">
         <h3 class="flex items-center mb-6 font-semibold text-gray-800 text-lg">
             <span class="flex justify-center items-center bg-primary/10 mr-3 rounded-full w-8 h-8 text-primary">3</span>
             تعيين الفريق العامل
         </h3>
 
-        <div class="space-y-8">
+        <div class="space-y-6 sm:space-y-8">
             <!-- Supervisors -->
-            <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                 <h4 class="mb-3 font-medium text-gray-800 text-md">المشرفون</h4>
-                <div class="gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="gap-2 sm:gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($staff as $s)
                     <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
                         <input type="checkbox" name="supervisor_ids[]" value="{{ $s->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
@@ -274,9 +274,9 @@ if (!isset($step3)) $step3 = [];
             </div>
 
             <!-- Teachers -->
-            <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                 <h4 class="mb-3 font-medium text-gray-800 text-md">الأساتذة</h4>
-                <div class="gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="gap-2 sm:gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($staff as $s)
                     <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
                         <input type="checkbox" name="teacher_ids[]" value="{{ $s->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
@@ -287,9 +287,9 @@ if (!isset($step3)) $step3 = [];
             </div>
 
             <!-- Admins -->
-            <div class="bg-gray-50 p-4 rounded-lg">
+            <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                 <h4 class="mb-3 font-medium text-gray-800 text-md">الإداريون</h4>
-                <div class="gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="gap-2 sm:gap-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($staff as $s)
                     <label class="flex items-center hover:bg-primary/5 p-3 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
                         <input type="checkbox" name="admin_ids[]" value="{{ $s->id }}" class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
@@ -301,16 +301,16 @@ if (!isset($step3)) $step3 = [];
         </div>
 
         <!-- Navigation -->
-        <div class="flex justify-between mt-8">
+        <div class="flex sm:flex-row flex-col justify-between gap-2 mt-6 sm:mt-8">
             <button type="button"
                 onclick="prevStep(2)"
-                class="flex items-center bg-gray-200 hover:bg-gray-300 shadow px-6 py-2.5 rounded-lg font-semibold text-gray-800 transition-colors duration-300">
+                class="flex justify-center items-center bg-gray-200 hover:bg-gray-300 shadow px-6 py-2.5 rounded-lg w-full sm:w-auto font-semibold text-gray-800 transition-colors duration-300">
                 <i class="fa-arrow-right mr-2 fas"></i>
                 السابق
             </button>
             <button type="button"
                 onclick="nextStep(4)"
-                class="flex items-center bg-green-600 hover:bg-green-700 shadow px-6 py-2.5 rounded-lg font-semibold text-white transition-colors duration-300">
+                class="flex justify-center items-center bg-green-600 hover:bg-green-700 shadow px-6 py-2.5 rounded-lg w-full sm:w-auto font-semibold text-white transition-colors duration-300">
                 التالي
                 <i class="fa-arrow-left mr-2 fas"></i>
             </button>
@@ -318,14 +318,14 @@ if (!isset($step3)) $step3 = [];
     </div>
 
     <!-- Step 4: Confirmation -->
-    <div id="step4" class="hidden p-6 step-content">
+    <div id="step4" class="hidden p-4 sm:p-6 step-content">
         <h3 class="flex items-center mb-6 font-semibold text-gray-800 text-lg">
             <span class="flex justify-center items-center bg-primary/10 mr-3 rounded-full w-8 h-8 text-primary">4</span>
             تأكيد إنشاء البرنامج
         </h3>
 
-        <div class="bg-gray-50 mb-6 p-6 rounded-lg">
-            <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
+        <div class="bg-gray-50 mb-4 sm:mb-6 p-4 sm:p-6 rounded-lg">
+            <div class="gap-4 sm:gap-6 grid grid-cols-1 md:grid-cols-2">
                 <!-- Program Info -->
                 <div>
                     <h4 class="mb-3 pb-2 border-gray-200 border-b font-medium text-gray-800">معلومات البرنامج</h4>
@@ -337,7 +337,7 @@ if (!isset($step3)) $step3 = [];
                 <!-- Students -->
                 <div>
                     <h4 class="mb-3 pb-2 border-gray-200 border-b font-medium text-gray-800">الطلاب المشاركون</h4>
-                    <ul class="space-y-2 max-h-60 overflow-y-auto" id="students-data-preview-list">
+                    <ul class="space-y-2 max-h-40 sm:max-h-60 overflow-y-auto" id="students-data-preview-list">
                         <!-- Filled by JavaScript -->
                     </ul>
                 </div>
@@ -345,7 +345,7 @@ if (!isset($step3)) $step3 = [];
                 <!-- Staff -->
                 <div class="md:col-span-2">
                     <h4 class="mb-3 pb-2 border-gray-200 border-b font-medium text-gray-800">الفريق العامل</h4>
-                    <ul class="space-y-2" id="staff-data-preview-list">
+                    <ul class="space-y-2 max-h-40 sm:max-h-60 overflow-y-auto" id="staff-data-preview-list">
                         <!-- Filled by JavaScript -->
                     </ul>
                 </div>
@@ -369,16 +369,16 @@ if (!isset($step3)) $step3 = [];
             <div id="hidden-students"></div>
 
             <!-- Navigation -->
-            <div class="flex justify-between mt-8">
+            <div class="flex sm:flex-row flex-col justify-between gap-2 mt-6 sm:mt-8">
                 <button type="button"
                     onclick="prevStep(3)"
-                    class="flex items-center bg-gray-200 hover:bg-gray-300 shadow px-6 py-2.5 rounded-lg font-semibold text-gray-800 transition-colors duration-300">
+                    class="flex justify-center items-center bg-gray-200 hover:bg-gray-300 shadow px-6 py-2.5 rounded-lg w-full sm:w-auto font-semibold text-gray-800 transition-colors duration-300">
                     <i class="fa-arrow-right mr-2 fas"></i>
                     السابق
                 </button>
                 <button type="submit"
                     id="final-submit-btn"
-                    class="flex items-center bg-green-700 hover:bg-green-800 shadow px-6 py-2.5 rounded-lg font-bold text-white transition-colors duration-300">
+                    class="flex justify-center items-center bg-green-700 hover:bg-green-800 shadow px-6 py-2.5 rounded-lg w-full sm:w-auto font-bold text-white transition-colors duration-300">
                     <i class="mr-2 fas fa-save"></i>
                     حفظ البرنامج
                 </button>

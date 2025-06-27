@@ -1,3 +1,24 @@
+@php
+use App\Models\Student;
+use App\Models\Staff;
+use App\Models\AcademicYear;
+
+$user = Auth::user();
+$activeAcademicYearId = null;
+if ($user && $user->establishment_id) {
+$activeAcademicYear = AcademicYear::where('establishment_id', $user->establishment_id)
+->where('status', true)
+->first();
+$activeAcademicYearId = $activeAcademicYear ? $activeAcademicYear->id : null;
+}
+$studentCount = $activeAcademicYearId
+? Student::where('academic_year_id', $activeAcademicYearId)->count()
+: 0;
+$staffCount = $activeAcademicYearId
+? Staff::where('academic_year_id', $activeAcademicYearId)->count()
+: 0;
+@endphp
+
 <aside class="top-0 left-0 z-40 fixed md:sticky bg-white shadow-md w-64 h-screen transition-transform -translate-x-full md:translate-x-0 duration-300 ease-in-out transform" id="sidebar">
     <!-- Mobile Sidebar Header -->
     <div class="md:hidden flex justify-between items-center p-4 border-gray-200 border-b">
@@ -48,7 +69,9 @@
                     class="flex items-center space-x-2 space-x-reverse w-full hover:bg-gray-100 p-3 rounded-lg focus:outline-none {{ request()->routeIs('admin.students.*') ? 'bg-blue-100 text-blue-800' : '' }}">
                     <i class="fas fa-users"></i>
                     <span>الطلبة</span>
-                    <span class="bg-blue-500 px-2 py-1 rounded-full text-white text-xs">324</span>
+                    <span class="bg-blue-500 px-2 py-1 rounded-full text-white text-xs">
+                        {{ $studentCount }}
+                    </span>
                     <i class="ml-1 text-xs fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
                 </button>
                 <ul x-show="open"
@@ -64,13 +87,25 @@
                     <li>
                         <a href="{{ route('csv.processor') }}" class="block hover:bg-gray-100 px-8 py-2 rounded-lg text-gray-700">استيراد الطلاب (CSV)</a>
                     </li>
+                    <li>
+                        <a href="{{ route('exam_results.prototype.form') }}" class="block hover:bg-gray-100 px-8 py-2 rounded-lg font-bold text-blue-700">
+                            <i class="fas fa-upload"></i> رفع نتائج الامتحان
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('exam_results.dashboard') }}" class="block hover:bg-gray-100 px-8 py-2 rounded-lg font-bold text-blue-700">
+                            <i class="fas fa-chart-bar"></i> إحصائيات الامتحانات
+                        </a>
+                    </li>
                 </ul>
             </li>
             <li>
                 <a href="{{ route('admin.staffs.index') }}" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
                     <i class="fas fa-chalkboard-teacher"></i>
                     <span>المؤطرين</span>
-                    <span class="bg-blue-500 px-2 py-1 rounded-full text-white text-xs">24</span>
+                    <span class="bg-blue-500 px-2 py-1 rounded-full text-white text-xs">
+                        {{ $staffCount }}
+                    </span>
                 </a>
             </li>
             <li>
@@ -118,17 +153,17 @@
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('sidebar-toggle');
         const closeBtn = document.getElementById('sidebar-close');
-        
+
         // Show/hide sidebar
         toggleBtn.addEventListener('click', function() {
             sidebar.classList.toggle('-translate-x-full');
         });
-        
+
         // Close sidebar
         closeBtn.addEventListener('click', function() {
             sidebar.classList.add('-translate-x-full');
         });
-        
+
         // Close sidebar when clicking outside
         document.addEventListener('click', function(event) {
             if (!sidebar.contains(event.target) && event.target !== toggleBtn) {

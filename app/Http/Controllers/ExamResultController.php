@@ -11,6 +11,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Support\Facades\Auth;
 
 class ExamResultController extends Controller
 {
@@ -21,7 +22,20 @@ class ExamResultController extends Controller
         $students = Student::orderBy('full_name')->get(['id', 'full_name', 'branch_id', 'initial_classroom']);
         $currentSession = ExamSession::where('is_current', true)->first();
         $currentSemester = $currentSession ? $currentSession->semester : null;
-        return view('exam_results.prototype', compact('levels', 'branches', 'students', 'currentSemester'));
+
+        // Add: Get active academic year and exam session id
+        $activeAcademicYear = \App\Models\AcademicYear::where('status', true)->first();
+        $activeAcademicYearId = $activeAcademicYear ? $activeAcademicYear->id : null;
+        $currentExamSessionId = $currentSession ? $currentSession->id : null;
+
+        return view('exam_results.prototype', compact(
+            'levels',
+            'branches',
+            'students',
+            'currentSemester',
+            'activeAcademicYearId',
+            'currentExamSessionId'
+        ));
     }
 
     // Add this helper to map branch/stream to subjects and coefficients
@@ -69,8 +83,36 @@ class ExamResultController extends Controller
     // Update prototypeDownload to generate columns for the selected stream
     public function prototypeDownload(Request $request)
     {
-        $query = Student::query();
+        // Establishment
+        $user = Auth::user();
+        $establishment = $user && $user->establishment_id ? \App\Models\Establishment::find($user->establishment_id) : null;
+        $establishmentName = $establishment ? $establishment->name : 'غير محدد';
 
+        // Academic year: use from request if set, else active
+        $academicYearId = $request->input('academic_year_id');
+        if ($academicYearId) {
+            $academicYear = \App\Models\AcademicYear::find($academicYearId);
+        } else {
+            $academicYear = \App\Models\AcademicYear::where('status', true)->first();
+        }
+        $academicYearName = $academicYear ? $academicYear->name : 'غير محدد';
+
+        // Exam session: use from request if set, else current
+        $examSessionId = $request->input('exam_session_id');
+        if ($examSessionId) {
+            $examSession = \App\Models\ExamSession::find($examSessionId);
+        } else {
+            $examSession = $academicYear ? \App\Models\ExamSession::where('academic_year_id', $academicYear->id)->where('is_current', true)->first() : null;
+        }
+        $examSessionName = $examSession ? $examSession->name : 'غير محدد';
+
+        // Only students from the selected/active academic year
+        $query = Student::query();
+        if ($academicYear) {
+            $query->where('academic_year_id', $academicYear->id);
+        } else {
+            $students = collect();
+        }
         if ($request->filled('level_id')) {
             $query->where('level_id', $request->input('level_id'));
         }
@@ -83,8 +125,7 @@ class ExamResultController extends Controller
         if ($request->filled('student_ids')) {
             $query->whereIn('id', $request->input('student_ids'));
         }
-
-        $students = $query->orderBy('full_name')->get();
+        $students = isset($students) ? $students : $query->orderBy('full_name')->get();
 
         // Branches to generate sheets for
         $branches = [
@@ -151,10 +192,18 @@ class ExamResultController extends Controller
             $sheet = $spreadsheet->createSheet();
             $sheet->setTitle(mb_substr($branchName, 0, 31)); // Excel sheet name limit
 
-            // Write headers
+            // --- Add header rows for establishment, academic year, exam session in Arabic ---
+            $sheet->setCellValue('A1', 'المؤسسة:');
+            $sheet->setCellValue('B1', $establishmentName);
+            $sheet->setCellValue('A2', 'السنة الدراسية:');
+            $sheet->setCellValue('B2', $academicYearName);
+            $sheet->setCellValue('A3', 'جلسة الامتحان:');
+            $sheet->setCellValue('B3', $examSessionName);
+
+            // Write headers (start at row 5)
             foreach ($branchInfo['headers'] as $col => $header) {
                 $columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1);
-                $sheet->setCellValue($columnLetter . '1', $header);
+                $sheet->setCellValue($columnLetter . '5', $header);
             }
 
             // Filter students for this branch
@@ -162,7 +211,7 @@ class ExamResultController extends Controller
                 return $student->branch && $student->branch->name === $branchName;
             })->values();
 
-            $rowNum = 2;
+            $rowNum = 6; // Start after header rows
             foreach ($branchStudents as $student) {
                 $colNum = 0;
                 // Student ID
@@ -208,8 +257,9 @@ class ExamResultController extends Controller
                 $rowNum++;
             }
 
-            // Add the remark at the top (row 2, column 1)
-            $sheet->setCellValue('A2', $branchInfo['remark']);
+            // Add the remark at the bottom (row after last student)
+            $remarkRow = $rowNum + 1;
+            $sheet->setCellValue('A' . $remarkRow, $branchInfo['remark']);
         }
 
         // Remove the default sheet if empty
@@ -217,9 +267,13 @@ class ExamResultController extends Controller
             $spreadsheet->removeSheetByIndex(0);
         }
 
-        $filename = 'exam_results_prototype_branches.xlsx';
+        // Build filename with establishment, academic year, and exam session
+        $filename = 'exam_results_prototype_' .
+            preg_replace('/\s+/', '_', $establishmentName) . '_' .
+            preg_replace('/\s+/', '_', $academicYearName) . '_' .
+            preg_replace('/\s+/', '_', $examSessionName) . '.xlsx';
 
-        $writer = new Xlsx($spreadsheet);
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         ob_start();
         $writer->save('php://output');
         $excelOutput = ob_get_clean();
@@ -702,5 +756,209 @@ class ExamResultController extends Controller
             'students',
             'streams'
         ));
+    }
+
+    // Show prototype upload form filtered by establishment and academic year
+    public function adminPrototypeForm($establishment_id, $academic_year_id)
+    {
+        $levels = \App\Models\Level::where('establishment_id', $establishment_id)
+            ->where('academic_year_id', $academic_year_id)
+            ->get(['id', 'name']);
+        $branches = \App\Models\Branch::where('establishment_id', $establishment_id)->get(['id', 'name']);
+        $students = \App\Models\Student::where('establishment_id', $establishment_id)
+            ->where('academic_year_id', $academic_year_id)
+            ->orderBy('full_name')->get(['id', 'full_name', 'branch_id', 'initial_classroom']);
+        $currentSession = \App\Models\ExamSession::where('academic_year_id', $academic_year_id)
+            ->where('is_current', true)->first();
+        $currentSemester = $currentSession ? $currentSession->semester : null;
+
+        // Add: Pass academic year and session id
+        $activeAcademicYearId = $academic_year_id;
+        $currentExamSessionId = $currentSession ? $currentSession->id : null;
+
+        return view('exam_results.prototype', compact(
+            'levels',
+            'branches',
+            'students',
+            'currentSemester',
+            'activeAcademicYearId',
+            'currentExamSessionId'
+        ));
+    }
+
+    // Show dashboard filtered by establishment, academic year, and session
+    public function adminDashboard($establishment_id, $academic_year_id, $exam_session_id)
+    {
+        // Filter all queries by establishment_id, academic_year_id, and exam_session_id
+        $streams = [
+            'علوم تجريبية' => 'Experimental Sciences',
+            'رياضيات' => 'Mathematics',
+            'آداب وفلسفة' => 'Literature & Philosophy',
+        ];
+
+        $totalParticipants = \App\Models\ExamResult::whereHas('student', function ($q) use ($establishment_id, $academic_year_id) {
+            $q->where('establishment_id', $establishment_id)
+                ->where('academic_year_id', $academic_year_id);
+        })
+            ->where('exam_session_id', $exam_session_id)
+            ->count();
+
+        $passedCount = \App\Models\ExamResult::whereHas('student', function ($q) use ($establishment_id, $academic_year_id) {
+            $q->where('establishment_id', $establishment_id)
+                ->where('academic_year_id', $academic_year_id);
+        })
+            ->where('exam_session_id', $exam_session_id)
+            ->where('success_status', 'passed')->count();
+
+        $failedCount = \App\Models\ExamResult::whereHas('student', function ($q) use ($establishment_id, $academic_year_id) {
+            $q->where('establishment_id', $establishment_id)
+                ->where('academic_year_id', $academic_year_id);
+        })
+            ->where('exam_session_id', $exam_session_id)
+            ->where('success_status', 'failed')->count();
+
+        $overallAverage = \App\Models\ExamResult::whereHas('student', function ($q) use ($establishment_id, $academic_year_id) {
+            $q->where('establishment_id', $establishment_id)
+                ->where('academic_year_id', $academic_year_id);
+        })
+            ->where('exam_session_id', $exam_session_id)
+            ->avg('overall_score');
+
+        // 2. Grade Distributions by stream
+        $gradeRanges = [
+            '0-6' => [0, 6],
+            '7-8' => [7, 8],
+            '9-10' => [9, 10],
+            '11-12' => [11, 12],
+            '13-14' => [13, 14],
+            '15-16' => [15, 16],
+            '17-18' => [17, 18],
+            '19-20' => [19, 20],
+        ];
+        $gradeDistributions = [];
+        foreach ($streams as $ar => $en) {
+            $branch = \App\Models\Branch::where('name', $ar)->first();
+            if (!$branch) continue;
+            $results = \App\Models\ExamResult::where('branch_id', $branch->id)->pluck('overall_score');
+            foreach ($gradeRanges as $label => [$min, $max]) {
+                $gradeDistributions[$ar][$label] = $results->filter(function ($score) use ($min, $max) {
+                    return $score >= $min && $score <= $max;
+                })->count();
+            }
+        }
+
+        // 3. Categories by Stream
+        $streamStats = [];
+        foreach ($streams as $ar => $en) {
+            $branch = \App\Models\Branch::where('name', $ar)->first();
+            if (!$branch) continue;
+            $results = \App\Models\ExamResult::where('branch_id', $branch->id);
+            $streamStats[$ar] = [
+                'participants' => $results->count(),
+                'passed' => $results->where('success_status', 'passed')->count(),
+                'failed' => $results->where('success_status', 'failed')->count(),
+                'average' => $results->avg('overall_score'),
+            ];
+            // Subject averages
+            $subjectAverages = \App\Models\Subject::where('branch_id', $branch->id)
+                ->get()
+                ->mapWithKeys(function ($subject) use ($branch) {
+                    $avg = \App\Models\SubjectGrade::where('subject_id', $subject->id)->avg('grade');
+                    return [$subject->name => $avg];
+                });
+            $streamStats[$ar]['subject_averages'] = $subjectAverages;
+        }
+
+        // 4. Highest Scores per subject per stream
+        $highestScores = [];
+        foreach ($streams as $ar => $en) {
+            $branch = \App\Models\Branch::where('name', $ar)->first();
+            if (!$branch) continue;
+            $subjects = \App\Models\Subject::where('branch_id', $branch->id)->get();
+            foreach ($subjects as $subject) {
+                $topGrade = \App\Models\SubjectGrade::where('subject_id', $subject->id)
+                    ->orderByDesc('grade')->first();
+                if ($topGrade) {
+                    $student = \App\Models\Student::find($topGrade->student_id);
+                    $highestScores[$ar][$subject->name] = [
+                        'student' => $student ? $student->full_name : '-',
+                        'grade' => $topGrade->grade,
+                    ];
+                }
+            }
+        }
+
+        // 5. Positive/Negative Impact (non-core subjects)
+        $positiveImpact = [];
+        $negativeImpact = [];
+        foreach ($streams as $ar => $en) {
+            $branch = \App\Models\Branch::where('name', $ar)->first();
+            if (!$branch) continue;
+            $coreSubjects = \App\Models\Subject::where('branch_id', $branch->id)->where('is_core_subject', true)->pluck('id')->toArray();
+            $nonCoreSubjects = \App\Models\Subject::where('branch_id', $branch->id)->where('is_core_subject', false)->pluck('id')->toArray();
+
+            // Positive: passed overall, failed core, but passed due to non-core
+            $positiveImpact[$ar] = \App\Models\ExamResult::where('branch_id', $branch->id)
+                ->where('success_status', 'passed')
+                ->get()
+                ->filter(function ($result) use ($coreSubjects, $nonCoreSubjects) {
+                    $coreAvg = \App\Models\SubjectGrade::where('student_id', $result->student_id)
+                        ->whereIn('subject_id', $coreSubjects)->avg('grade');
+                    $nonCoreAvg = \App\Models\SubjectGrade::where('student_id', $result->student_id)
+                        ->whereIn('subject_id', $nonCoreSubjects)->avg('grade');
+                    return $coreAvg < 10 && $nonCoreAvg >= 10;
+                })->count();
+
+            // Negative: failed overall, passed core, but failed due to non-core
+            $negativeImpact[$ar] = \App\Models\ExamResult::where('branch_id', $branch->id)
+                ->where('success_status', 'failed')
+                ->get()
+                ->filter(function ($result) use ($coreSubjects, $nonCoreSubjects) {
+                    $coreAvg = \App\Models\SubjectGrade::where('student_id', $result->student_id)
+                        ->whereIn('subject_id', $coreSubjects)->avg('grade');
+                    $nonCoreAvg = \App\Models\SubjectGrade::where('student_id', $result->student_id)
+                        ->whereIn('subject_id', $nonCoreSubjects)->avg('grade');
+                    return $coreAvg >= 10 && $nonCoreAvg < 10;
+                })->count();
+        }
+
+        // 6. Paginated student list with subject grades and results
+        $students = \App\Models\Student::with([
+            'branch',
+            'subjectGrades.subject',
+            'examResults' => function ($q) use ($exam_session_id) {
+                $q->where('exam_session_id', $exam_session_id);
+            },
+        ])
+            ->where('establishment_id', $establishment_id)
+            ->where('academic_year_id', $academic_year_id)
+            ->paginate(25);
+
+        return view('exam_results.dashboard', compact(
+            'totalParticipants',
+            'passedCount',
+            'failedCount',
+            'overallAverage',
+            'gradeDistributions',
+            'streamStats',
+            'highestScores',
+            'positiveImpact',
+            'negativeImpact',
+            'students',
+            'streams'
+        ));
+    }
+
+    // Set only one active exam session per establishment
+    public function activateExamSession(\App\Models\ExamSession $exam_session)
+    {
+        // Deactivate all sessions for this establishment's academic year
+        \App\Models\ExamSession::where('academic_year_id', $exam_session->academic_year_id)
+            ->update(['is_current' => false]);
+        // Activate the selected session
+        $exam_session->is_current = true;
+        $exam_session->save();
+
+        return redirect()->back()->with('success', 'تم تعيين الجلسة كجلسة امتحان نشطة بنجاح.');
     }
 }

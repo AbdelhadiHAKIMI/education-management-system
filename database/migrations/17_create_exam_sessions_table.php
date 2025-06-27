@@ -11,7 +11,9 @@ return new class extends Migration
       Schema::create('exam_sessions', function (Blueprint $table) {
          $table->id();
          $table->string('name', 100);
-         $table->foreignId('academic_year_id')->constrained('academic_years');
+         $table->foreignId('academic_year_id')
+            ->constrained('academic_years')
+            ->onDelete('cascade');
          $table->enum('semester', ['first', 'second']);
          $table->boolean('is_current')->default(false);
          $table->timestamps();

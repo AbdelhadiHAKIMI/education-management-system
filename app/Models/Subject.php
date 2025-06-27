@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -6,7 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class Subject extends Model
 {
     protected $fillable = [
-        'name', 'coefficient', 'branch_id', 'is_core_subject'
+        'name',
+        'coefficient',
+        'branch_id',
+        'is_core_subject'
     ];
 
     public function branch()

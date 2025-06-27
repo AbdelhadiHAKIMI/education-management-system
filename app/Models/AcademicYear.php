@@ -22,4 +22,40 @@ class AcademicYear extends Model
    {
       return $this->belongsTo(Establishment::class);
    }
+
+   public function examSessions()
+   {
+      return $this->hasMany(\App\Models\ExamSession::class);
+   }
+
+   protected static function booted()
+   {
+      // REMOVE exam session creation from here!
+      static::deleting(function ($academicYear) {
+         $academicYear->examSessions()->delete();
+      });
+   }
+
+   // Add this helper as a static method in the AcademicYear model
+   public static function ensureExamSessionsForAllYears()
+   {
+      $sessions = [
+         ['name' => 'الفصل الأول', 'semester' => 'first'],
+         ['name' => 'الفصل الثاني', 'semester' => 'second'],
+         ['name' => 'الفصل الثالث', 'semester' => 'third'],
+      ];
+      foreach (self::all() as $year) {
+         // Only create if there are no sessions for this year
+         if ($year->examSessions()->count() == 0) {
+            foreach ($sessions as $session) {
+               \App\Models\ExamSession::create([
+                  'name' => $session['name'],
+                  'academic_year_id' => $year->id,
+                  'semester' => $session['semester'],
+                  'is_current' => false,
+               ]);
+            }
+         }
+      }
+   }
 }

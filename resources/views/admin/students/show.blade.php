@@ -63,9 +63,9 @@
             @php
             $program = \App\Models\Program::find(1);
             @endphp
-            {{-- filepath: resources/views/admin/students/show.blade.php --}}
             <tbody id="students-table-body" class="divide-y divide-gray-200">
                 @php $i = 1; @endphp
+                @if($program)
                 @foreach(\App\Models\ProgramInvitation::where('program_id', $program->id)->get() as $invitation)
                 @php
                 $student = \App\Models\Student::find($invitation->student_id);
@@ -109,6 +109,11 @@
                 </tr>
                 @php $i++; @endphp
                 @endforeach
+                @else
+                <tr>
+                    <td colspan="100%" class="py-4 text-gray-500 text-center">البرنامج غير موجود.</td>
+                </tr>
+                @endif
             </tbody>
         </table>
     </div>
@@ -131,6 +136,61 @@
         </div>
     </div>
 </div>
+
+<!-- Sidebar or Navigation Section -->
+<aside class="top-0 sticky bg-white shadow-md w-64 h-screen">
+    <div class="p-4 border-gray-200 border-b">
+        <div class="flex items-center space-x-3 space-x-reverse">
+            <img src="https://ui-avatars.com/api/?name={{ auth()->user()->name }}&background=random"
+                class="rounded-full w-10 h-10" alt="صورة المستخدم">
+            <div>
+                <p class="font-medium">{{ auth()->user()->name }}</p>
+                <p class="text-gray-500 text-xs">{{ ucfirst(auth()->user()->role) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="p-4">
+        <ul class="space-y-2 mt-4">
+            <li>
+                <a href="{{ route('admin.students.index') }}" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
+                    <i class="fas fa-users"></i>
+                    <span>عرض الطلاب</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.students.create') }}" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
+                    <i class="fas fa-user-plus"></i>
+                    <span>إضافة طالب جديد</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('csv.processor') }}" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg">
+                    <i class="fas fa-file-csv"></i>
+                    <span>استيراد الطلاب (CSV)</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.exam_results.prototype', [
+                    'establishment_id' => auth()->user()->establishment_id,
+                    'academic_year_id' => \App\Models\AcademicYear::where('establishment_id', auth()->user()->establishment_id)->where('status', true)->first()?->id
+                ]) }}" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg font-semibold text-blue-700">
+                    <i class="fas fa-upload"></i>
+                    <span>رفع نتائج الامتحان</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('admin.exam_results.dashboard', [
+                    'establishment_id' => auth()->user()->establishment_id,
+                    'academic_year_id' => \App\Models\AcademicYear::where('establishment_id', auth()->user()->establishment_id)->where('status', true)->first()?->id,
+                    'exam_session_id' => \App\Models\ExamSession::where('academic_year_id', \App\Models\AcademicYear::where('establishment_id', auth()->user()->establishment_id)->where('status', true)->first()?->id)->where('is_current', true)->first()?->id
+                ]) }}" class="flex items-center space-x-2 space-x-reverse hover:bg-gray-100 p-3 rounded-lg font-semibold text-blue-700">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>إحصائيات الامتحانات</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</aside>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

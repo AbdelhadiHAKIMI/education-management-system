@@ -50,11 +50,11 @@
                 </div>
             </div>
             <div class="flex sm:flex-row flex-col gap-2 mt-auto pt-4 border-gray-100 border-t">
-                <a href="#"
+                <a href="{{ route('admin.programs.show', ['program' => $program->id]) }}"
                     class="flex flex-1 justify-center items-center gap-2 bg-indigo-50 hover:bg-indigo-100 shadow-sm px-4 py-2 rounded-lg font-semibold text-indigo-700 transition-colors duration-150">
                     <i class="fas fa-eye"></i> عرض
                 </a>
-                <a href="#"
+                <a href="{{ route('admin.programs.edit', ['program' => $program->id]) }}"
                     class="flex flex-1 justify-center items-center gap-2 bg-gray-50 hover:bg-gray-100 shadow-sm px-4 py-2 rounded-lg font-semibold text-gray-700 transition-colors duration-150">
                     <i class="fas fa-edit"></i> تعديل
                 </a>

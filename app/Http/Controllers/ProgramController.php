@@ -113,13 +113,12 @@ class ProgramController extends Controller
     }
 
     // Display the specified program
-    public function show(Request $request, Program $program = null)
+    public function show(Request $request, Program $program)
     {
-        // Support both /programs/{program}/show and /programs/show?program=ID
-        if (!$program && $request->has('program')) {
-            $program = Program::findOrFail($request->input('program'));
-        }
-        return response()->json($program);
+        $academicYears = \App\Models\AcademicYear::all();
+        $levels = \App\Models\Level::all();
+        $invitations = $program->invitations ?? collect();
+        return view('admin.programs.show', compact('program', 'academicYears', 'levels', 'invitations'));
     }
 
     // Show the form for editing the specified program
@@ -127,7 +126,8 @@ class ProgramController extends Controller
     {
         $academicYears = \App\Models\AcademicYear::all();
         $levels = \App\Models\Level::all();
-        return view('admin.programs.edit', compact('program', 'academicYears', 'levels'));
+        $invitations = $program->invitations ?? collect();
+        return view('admin.programs.edit', compact('program', 'academicYears', 'levels', 'invitations'));
     }
 
     // Update the specified program in storage
@@ -262,5 +262,56 @@ class ProgramController extends Controller
         return redirect()->route('admin.programs.edit', $program->id)
             ->with('success', 'تم إنشاء البرنامج بنجاح.');
     }
-}
 
+    // Update invitation status for a student in a program
+    public function updateInvitationStatus(Request $request, $invitationId)
+    {
+        $request->validate([
+            'status' => 'required|in:invited,accepted,rejected'
+        ]);
+        $invitation = \App\Models\ProgramInvitation::findOrFail($invitationId);
+        $invitation->status = $request->input('status');
+        $invitation->responded_at = now();
+        $invitation->save();
+
+        return response()->json(['success' => true, 'status' => $invitation->status]);
+    }
+
+    // AJAX: Search/filter students in a program by name or branch
+    public function filterInvitedStudents(Request $request, $programId)
+    {
+        $query = \App\Models\ProgramInvitation::with('student.branch')
+            ->where('program_id', $programId);
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->whereHas('student', function ($q) use ($search) {
+                $q->where('full_name', 'like', "%$search%");
+            });
+        }
+        if ($request->filled('branch_id')) {
+            $branchId = $request->input('branch_id');
+            $query->whereHas('student', function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            });
+        }
+
+        $invitations = $query->get();
+
+        // Build a simple HTML table string (example)
+        $html = '<table><tr><th>#</th><th>اسم الطالب</th><th>الشعبة</th></tr>';
+        foreach ($invitations as $i => $inv) {
+            $html .= '<tr>';
+            $html .= '<td>' . ($i+1) . '</td>';
+            $html .= '<td>' . ($inv->student->full_name ?? '-') . '</td>';
+            $html .= '<td>' . ($inv->student->branch->name ?? '-') . '</td>';
+            $html .= '</tr>';
+        }
+        $html .= '</table>';
+
+        return response()->json([
+            'html' => $html
+        ]);
+    }
+
+}
