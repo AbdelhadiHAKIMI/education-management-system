@@ -87,6 +87,9 @@ class StaffController extends Controller
                 'subjects' => 'nullable|array',
                 'subjects.*' => 'exists:subjects,id'
             ]);
+        } else {
+            // If not مؤطر دراسي, force branch_id to null
+            $validated['branch_id'] = null;
         }
 
         // Always get the active academic year for this establishment
@@ -96,7 +99,6 @@ class StaffController extends Controller
 
         $academicYearId = $currentAcademicYear ? $currentAcademicYear->id : null;
 
-        // If no active academic year, throw a validation error
         if (!$academicYearId) {
             return back()->withErrors(['academic_year_id' => 'لا توجد سنة دراسية نشطة لهذه المؤسسة'])->withInput();
         }
@@ -107,7 +109,7 @@ class StaffController extends Controller
             'phone' => $validated['phone'],
             'bac_year' => $validated['bac_year'],
             'type' => $validated['type'],
-            'branch_id' => ($validated['type'] === 'مؤطر دراسي' && isset($validated['branch_id'])) ? $validated['branch_id'] : null,
+            'branch_id' => $validated['branch_id'],
             'univ_specialty' => $validated['univ_specialty'],
             'academic_year_id' => $academicYearId,
             'establishment_id' => Auth::user()->establishment_id
@@ -229,7 +231,24 @@ class StaffController extends Controller
             abort(403);
         }
 
+        // Remove related program_staff records before deleting staff
+        \App\Models\ProgramStaff::where('staff_id', $staff->id)->delete();
+
+        // If you have other relations with foreign keys to staff, delete them here as well
+
         $staff->delete();
         return redirect()->route('admin.staffs.index')->with('success', 'تم حذف المؤطر بنجاح');
+    }
+
+    public function updateType(Request $request, $staffId)
+    {
+        $request->validate([
+            'type' => 'required|in:إداري,مؤطر دراسي,خدمات',
+        ]);
+        $staff = \App\Models\Staff::findOrFail($staffId);
+        $staff->type = $request->input('type');
+        $staff->save();
+
+        return redirect()->back()->with('success', 'تم تغيير نوع المؤطر بنجاح.');
     }
 }

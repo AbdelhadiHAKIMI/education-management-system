@@ -27,7 +27,7 @@
         <!-- CSV Upload Button -->
         <button type="button" id="openCSVModal" class="flex items-center space-x-2 space-x-reverse bg-white hover:bg-gray-50 px-4 py-2 border border-gray-300 rounded-lg text-gray-700">
             <i class="fas fa-file-import"></i>
-            <span>رفع ملف CSV</span>
+            <span>إستيراد الطلبة CSV</span>
         </button>
         <!-- Add New Student Button -->
         <button onclick="openAddStudentModal()" class="flex items-center space-x-2 space-x-reverse bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white">
@@ -41,9 +41,13 @@
 <div class="bg-white shadow-md mb-6 p-4 rounded-lg">
     <div class="flex md:flex-row flex-col md:justify-between md:items-center gap-4">
         <div class="relative flex-1">
-            <input id="student-search" type="text" placeholder="ابحث عن طالب..."
-                class="py-2 pr-10 pl-4 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full">
-            <i class="top-3 right-3 absolute text-gray-400 fas fa-search"></i>
+            <form method="GET" action="{{ route('admin.students.index') }}" class="flex" id="student-search-form" autocomplete="off">
+                <input id="student-search" name="search" type="text" value="{{ request('search') }}" placeholder="ابحث عن طالب..."
+                    class="py-2 pr-10 pl-4 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-blue-500 w-full" autocomplete="off">
+                <button type="submit" class="top-3 right-3 absolute text-gray-400">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
         </div>
         <div class="flex space-x-3 space-x-reverse">
             <form method="GET" class="flex items-center">
@@ -54,18 +58,6 @@
                     @endforeach
                 </select>
             </form>
-            <select class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700">
-                <option>فرز حسب الأقدم</option>
-                <option>فرز حسب الأحدث</option>
-                <option>فرز حسب الاسم</option>
-            </select>
-            <label for="status-filter" class="sr-only">حسب الحالة</label>
-            <select id="status-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-gray-700" name="status-filter">
-                <option value="all">عرض الكل</option>
-                <option value="invited">مرسل له</option>
-                <option value="accepted">مشارك</option>
-                <option value="declined">غير مشارك</option>
-            </select>
         </div>
     </div>
 </div>
@@ -81,23 +73,20 @@
                     <th class="px-4 py-3 font-semibold text-gray-700 text-right">تاريخ الميلاد</th>
                     <th class="px-4 py-3 font-semibold text-gray-700 text-right">المستوى</th>
                     <th class="px-4 py-3 font-semibold text-gray-700 text-right">الشعبة</th>
-                    <th class="px-4 py-3 font-semibold text-gray-700 text-right">الحالة</th>
                     <th class="px-4 py-3 font-semibold text-gray-700 text-right">الإجراءات</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200" id="students-table-body">
                 @forelse($students as $student)
                 <tr class="hover:bg-gray-50" data-status="{{ $student->status }}">
-                    <td class="px-4 py-3">{{ $student->id }}</td>
+                    <td class="px-4 py-3">
+                        {{ ($students->currentPage() - 1) * $students->perPage() + $loop->iteration }}
+                    </td>
                     <td class="px-4 py-3 font-medium student-name">{{ $student->full_name }}</td>
                     <td class="px-4 py-3">{{ $student->birth_date }}</td>
                     <td class="px-4 py-3">{{ $student->level?->name ?? '-' }}</td>
                     <td class="px-4 py-3">{{ $student->branch?->name ?? '-' }}</td>
-                    <td class="px-4 py-3">
-                        <span class="bg-green-100 px-2 py-1 rounded-full text-green-800 text-xs">
-                            {{ $student->status === 'accepted' ? 'مشارك' : ($student->status === 'invited' ? 'مرسل له' : 'غير مشارك') }}
-                        </span>
-                    </td>
+
                     <td class="px-4 py-3">
                         <div class="flex space-x-2 space-x-reverse">
                             <a href="{{ route('admin.students.show', $student) }}" class="text-blue-600 hover:text-blue-800" title="عرض">
@@ -278,69 +267,141 @@
 </div>
 
 <script>
+    // Remove client-side search logic for all pages, since server-side search is now used.
+    // Modals
+    window.openAddStudentModal = function() {
+        document.getElementById('addStudentModal').classList.remove('hidden');
+    }
+    window.closeAddStudentModal = function() {
+        document.getElementById('addStudentModal').classList.add('hidden');
+    }
+
+    // CSV Modal logic
+    const openCSVBtn = document.getElementById('openCSVModal');
+    const csvModal = document.getElementById('csvModal');
+    const closeCSVBtn = document.getElementById('closeCSVModal');
+    const cancelCSVBtn = document.getElementById('cancelCSVModal');
+
+    function openCSVModal() {
+        csvModal.classList.remove('hidden');
+    }
+
+    function closeCSVModal() {
+        csvModal.classList.add('hidden');
+    }
+
+    if (openCSVBtn) openCSVBtn.addEventListener('click', openCSVModal);
+    if (closeCSVBtn) closeCSVBtn.addEventListener('click', closeCSVModal);
+    if (cancelCSVBtn) cancelCSVBtn.addEventListener('click', closeCSVModal);
+
+    // Optional: close modal when clicking outside the modal content
+    csvModal && csvModal.addEventListener('click', function(e) {
+        if (e.target === csvModal) closeCSVModal();
+    });
+
+    // AJAX search: reload only the students table, not the whole page
     document.addEventListener('DOMContentLoaded', function() {
-        // Search and filter functionality
         const searchInput = document.getElementById('student-search');
-        const statusFilter = document.getElementById('status-filter');
-        const rows = Array.from(document.querySelectorAll('#students-table-body tr'));
+        const searchForm = document.getElementById('student-search-form');
+        let debounceTimeout = null;
 
-        function filterStudents() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const status = statusFilter.value;
+        function updateTable(html) {
+            // Replace only the table body and pagination
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newTbody = doc.querySelector('#students-table-body');
+            const newPagination = doc.querySelector('.flex.justify-between.items-center.px-6.py-4.border-gray-200.border-t');
+            if (newTbody) {
+                document.getElementById('students-table-body').innerHTML = newTbody.innerHTML;
+            }
+            if (newPagination) {
+                const oldPag = document.querySelector('.flex.justify-between.items-center.px-6.py-4.border-gray-200.border-t');
+                if (oldPag) oldPag.innerHTML = newPagination.innerHTML;
+            }
+        }
 
-            rows.forEach(row => {
-                const studentName = row.querySelector('.student-name').textContent.toLowerCase();
-                const matchesSearch = studentName.includes(searchTerm);
-                let matchesStatus = true;
-
-                if (status !== 'all') {
-                    const studentStatus = row.dataset.status;
-                    matchesStatus = (status === 'accepted' && studentStatus === 'مشارك') ||
-                        (status === 'invited' && studentStatus === 'مرسل له') ||
-                        (status === 'declined' && studentStatus === 'غير مشارك');
-                }
-
-                if (matchesSearch && matchesStatus) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+        if (searchInput && searchForm) {
+            searchInput.addEventListener('input', function(e) {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(function() {
+                    const url = searchForm.action + '?search=' + encodeURIComponent(searchInput.value);
+                    fetch(url, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(res => res.text())
+                        .then(html => {
+                            updateTable(html);
+                        });
+                }, 400);
             });
         }
-
-        searchInput.addEventListener('input', filterStudents);
-        statusFilter.addEventListener('change', filterStudents);
-
-        // Modals
-        window.openAddStudentModal = function() {
-            document.getElementById('addStudentModal').classList.remove('hidden');
-        }
-        window.closeAddStudentModal = function() {
-            document.getElementById('addStudentModal').classList.add('hidden');
-        }
-
-        // CSV Modal logic
-        const openCSVBtn = document.getElementById('openCSVModal');
-        const csvModal = document.getElementById('csvModal');
-        const closeCSVBtn = document.getElementById('closeCSVModal');
-        const cancelCSVBtn = document.getElementById('cancelCSVModal');
-
-        function openCSVModal() {
-            csvModal.classList.remove('hidden');
-        }
-
-        function closeCSVModal() {
-            csvModal.classList.add('hidden');
-        }
-
-        if (openCSVBtn) openCSVBtn.addEventListener('click', openCSVModal);
-        if (closeCSVBtn) closeCSVBtn.addEventListener('click', closeCSVModal);
-        if (cancelCSVBtn) cancelCSVBtn.addEventListener('click', closeCSVModal);
-
-        // Optional: close modal when clicking outside the modal content
-        csvModal && csvModal.addEventListener('click', function(e) {
-            if (e.target === csvModal) closeCSVModal();
-        });
     });
 </script>
+
+@if(request()->ajax())
+{{-- Only render the students table and pagination for AJAX --}}
+<table class="w-full">
+    <thead class="bg-gray-100">
+        <tr>
+            <th class="px-4 py-3 font-semibold text-gray-700 text-right">معرف الطالب</th>
+            <th class="px-4 py-3 font-semibold text-gray-700 text-right">الاسم الكامل</th>
+            <th class="px-4 py-3 font-semibold text-gray-700 text-right">تاريخ الميلاد</th>
+            <th class="px-4 py-3 font-semibold text-gray-700 text-right">المستوى</th>
+            <th class="px-4 py-3 font-semibold text-gray-700 text-right">الشعبة</th>
+            <th class="px-4 py-3 font-semibold text-gray-700 text-right">الإجراءات</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-200" id="students-table-body">
+        @forelse($students as $student)
+        <tr class="hover:bg-gray-50" data-status="{{ $student->status }}">
+            <td class="px-4 py-3">
+                {{ ($students->currentPage() - 1) * $students->perPage() + $loop->iteration }}
+            </td>
+            <td class="px-4 py-3 font-medium student-name">{{ $student->full_name }}</td>
+            <td class="px-4 py-3">{{ $student->birth_date }}</td>
+            <td class="px-4 py-3">{{ $student->level?->name ?? '-' }}</td>
+            <td class="px-4 py-3">{{ $student->branch?->name ?? '-' }}</td>
+            <td class="px-4 py-3">
+                <div class="flex space-x-2 space-x-reverse">
+                    <a href="{{ route('admin.students.show', $student) }}" class="text-blue-600 hover:text-blue-800" title="عرض">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ route('admin.students.edit', $student) }}" class="text-yellow-600 hover:text-yellow-800" title="تعديل">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form action="{{ route('admin.students.destroy', $student) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف الطالب؟');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-red-600 hover:text-red-800" title="حذف">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        @empty
+        <tr>
+            <td colspan="7" class="px-4 py-4 text-gray-500 text-center">لا يوجد طلاب مسجلين في السنة الدراسية الحالية.</td>
+        </tr>
+        @endforelse
+    </tbody>
+</table>
+<div class="flex justify-between items-center px-6 py-4 border-gray-200 border-t">
+    <div class="text-gray-500 text-sm">
+        عرض
+        <span class="font-medium">{{ $students->firstItem() ?? 0 }}</span>
+        إلى
+        <span class="font-medium">{{ $students->lastItem() ?? 0 }}</span>
+        من
+        <span class="font-medium">{{ $students->total() }}</span>
+        نتائج
+    </div>
+    <div>
+        {{ $students->links() }}
+    </div>
+</div>
+@php exit; @endphp
+@endif
 @endsection

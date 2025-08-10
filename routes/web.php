@@ -170,11 +170,11 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
    Route::get('/programs/{program}/edit', [ProgramController::class, 'edit'])->where('program', '[0-9]+')->name('admin.programs.edit');
    Route::get('/programs/{program}/show', [ProgramController::class, 'show'])->where('program', '[0-9]+')->name('admin.programs.show');
    Route::put('/programs/{program}', [ProgramController::class, 'update'])->where('program', '[0-9]+')->name('admin.programs.update');
+   Route::delete('/programs/{program}', [ProgramController::class, 'destroy'])->where('program', '[0-9]+')->name('admin.programs.destroy');
+   Route::delete('/programs/{program}/remove-staff/{staff}', [ProgramController::class, 'removeStaff'])->name('admin.programs.removeStaff');
 
-   // REMOVE this line to avoid route conflict:
-   // Route::get('/programs/{program}', [ProgramController::class, 'show'])->name('admin.programs.show');
-
-   Route::get('/programs/attendance', [ProgramController::class, 'attendance'])->name('admin.programs.attendance');
+   // Add this route for updating staff type directly (AJAX or form)
+   Route::put('/staffs/{staff}/type', [StaffController::class, 'updateType'])->name('admin.staffs.updateType');
 
 
    // Students Routes
@@ -347,6 +347,8 @@ Route::prefix('admin/programs')->middleware(['auth'])->group(function () {
    Route::post('/wizard/step3', [ProgramController::class, 'wizardStep3Post'])->name('admin.programs.wizard.step3.post');
    Route::get('/wizard/step4', [ProgramController::class, 'wizardStep4'])->name('admin.programs.wizard.step4');
    Route::post('/wizard/step4', [ProgramController::class, 'wizardStep4Post'])->name('admin.programs.wizard.step4.post');
+   Route::post('/{program}/add-students', [\App\Http\Controllers\ProgramController::class, 'addStudents'])->name('admin.programs.addStudents');
+   Route::post('/{program}/add-staff', [\App\Http\Controllers\ProgramController::class, 'addStaff'])->name('admin.programs.addStaff');
 });
 
 // Exam Results Prototype Upload (admin, filtered)
@@ -374,3 +376,4 @@ Route::middleware(['auth'])->group(function () {
 Route::post('/academic-years', [AcademicYearController::class, 'store'])->name('academic-years.store');
 
 Route::post('/academic-years', [AcademicYearController::class, 'store'])->name('academic-years.store');
+Route::delete('/admin/programs/{program}/remove-staff/{staff}', [\App\Http\Controllers\ProgramController::class, 'removeStaff'])->name('admin.programs.removeStaff');

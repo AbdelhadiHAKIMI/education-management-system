@@ -56,12 +56,12 @@ class ProgramController extends Controller
         // Only allow academic years for the user's establishment
         $academicYearsForEst = $academicYears->where('establishment_id', $establishmentId);
 
-        // Filtering logic for AJAX staff filter
-        $selectedStaffAcademicYearId = $request->input('staff_academic_year_id');
-        if (!$selectedStaffAcademicYearId) {
-            $selectedStaffAcademicYearId = $activeAcademicYear ? $activeAcademicYear->id : ($academicYearsForEst->first()->id ?? null);
+        // --- Multi-year staff filter ---
+        $selectedStaffAcademicYearIds = $request->input('staff_academic_year_ids', []);
+        if (!$selectedStaffAcademicYearIds || count($selectedStaffAcademicYearIds) == 0) {
+            $selectedStaffAcademicYearIds = $activeAcademicYear ? [$activeAcademicYear->id] : ($academicYearsForEst->pluck('id')->toArray() ?? []);
         }
-        $filteredStaff = $staff->where('academic_year_id', $selectedStaffAcademicYearId);
+        $filteredStaff = $staff->whereIn('academic_year_id', $selectedStaffAcademicYearIds);
         $staffType = $request->input('staff_type');
         if ($staffType) {
             $filteredStaff = $filteredStaff->where('type', $staffType);
@@ -78,7 +78,7 @@ class ProgramController extends Controller
             'staff',
             'branches',
             'academicYearsForEst',
-            'selectedStaffAcademicYearId',
+            'selectedStaffAcademicYearIds',
             'filteredStaff'
         ));
     }
@@ -220,8 +220,14 @@ class ProgramController extends Controller
     // Remove the specified program from storage
     public function destroy(Program $program)
     {
+        // Delete related invitations and staff assignments first
+        \App\Models\ProgramInvitation::where('program_id', $program->id)->delete();
+        \App\Models\ProgramStaff::where('program_id', $program->id)->delete();
+
         $program->delete();
-        return response()->json(null, 204);
+
+        // Redirect to the programs index page (use a regular redirect for web, not JSON)
+        return redirect()->route('admin.programs.index')->with('success', 'تم حذف البرنامج بنجاح.');
     }
 
     // Step 1: Initial Data
@@ -382,6 +388,82 @@ class ProgramController extends Controller
             'html' => $html
         ]);
     }
+
+    /**
+     * Add students to a program.
+     */
+    public function addStudents(Request $request, $programId)
+    {
+        $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id',
+        ]);
+
+        $program = \App\Models\Program::findOrFail($programId);
+        $now = now();
+
+        $invitations = [];
+        foreach ($request->student_ids as $studentId) {
+            // Prevent duplicate invitations
+            if (!\App\Models\ProgramInvitation::where('program_id', $programId)->where('student_id', $studentId)->exists()) {
+                $invitations[] = [
+                    'student_id' => $studentId,
+                    'program_id' => $programId,
+                    'status' => 'invited',
+                    'is_exempt' => false,
+                    'invited_at' => $now,
+                    'responded_at' => null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+        if ($invitations) {
+            \App\Models\ProgramInvitation::insert($invitations);
+        }
+
+        return redirect()->back()->with('success', 'تمت إضافة الطلاب للبرنامج بنجاح.');
+    }
+
+    /**
+     * Add staff to a program.
+     */
+    public function addStaff(Request $request, $programId)
+    {
+        $request->validate([
+            'staff_ids' => 'required|array',
+            'staff_ids.*' => 'exists:staff,id',
+        ]);
+
+        $program = \App\Models\Program::findOrFail($programId);
+        $now = now();
+
+        $programStaff = [];
+        foreach ($request->staff_ids as $staffId) {
+            // Prevent duplicate staff assignment
+            $exists = \App\Models\ProgramStaff::where('program_id', $programId)
+                ->where('staff_id', $staffId)
+                ->exists();
+            if (!$exists) {
+                $programStaff[] = [
+                    'program_id' => $programId,
+                    'staff_id' => $staffId,
+                    'assigned_at' => $now,
+                    'is_active' => true,
+                ];
+            }
+        }
+        if (!empty($programStaff)) {
+            \App\Models\ProgramStaff::insert($programStaff);
+            return redirect()->back()->with('success', 'تمت إضافة الفريق للبرنامج بنجاح.');
+        } else {
+            return redirect()->back()->with('info', 'كل المؤطرين المحددين مضافون بالفعل.');
+        }
+    }
+
+    public function removeStaff($programId, $staffId)
+    {
+        \App\Models\ProgramStaff::where('program_id', $programId)->where('staff_id', $staffId)->delete();
+        return redirect()->back()->with('success', 'تمت إزالة المؤطر من البرنامج بنجاح.');
+    }
 }
-
-

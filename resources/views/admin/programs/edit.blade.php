@@ -184,46 +184,153 @@ $staffCount = $supervisors->count() + $teachers->count() + $admins->count();
 
     <!-- Staff List -->
     <div class="bg-white shadow mb-6 p-4 rounded-lg">
-        <h2 class="mb-2 font-semibold text-primary text-lg">الفريق العامل</h2>
-        <div class="gap-4 grid grid-cols-1 md:grid-cols-3">
-            <div>
-                <h3 class="mb-2 font-medium text-gray-700">المشرفون</h3>
-                <ul class="pr-5 list-disc">
-                    @forelse($supervisors as $staff)
-                    <li>{{ $staff->full_name }}</li>
-                    @empty
-                    <li class="text-gray-400">لا يوجد مشرفون</li>
-                    @endforelse
-                </ul>
+        <h2 class="mb-2 font-semibold text-primary text-lg">فريق العمل</h2>
+        @if(session('success'))
+        <div class="bg-green-100 mb-2 p-2 rounded text-green-700 text-sm">{{ session('success') }}</div>
+        @endif
+        @if(session('info'))
+        <div class="bg-blue-100 mb-2 p-2 rounded text-blue-700 text-sm">{{ session('info') }}</div>
+        @endif
+
+        <form method="POST" action="{{ route('admin.programs.addStaff', $program->id) }}">
+            @csrf
+            <div class="gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mb-4 max-h-56 overflow-y-auto">
+                @php
+                $user = Auth::user();
+                $establishmentId = $user ? $user->establishment_id : null;
+                $staffQuery = \App\Models\Staff::query();
+                if ($establishmentId) {
+                $staffQuery->where('establishment_id', $establishmentId);
+                }
+                $staffList = $staffQuery->get();
+                @endphp
+                @foreach($staffList as $staff)
+                <label class="flex items-center gap-2 bg-gray-50 hover:bg-primary/10 px-3 py-2 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
+                    <input type="checkbox" name="staff_ids[]" value="{{ $staff->id }}"
+                        @if($programStaff->contains('staff_id', $staff->id)) disabled checked @endif
+                    class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
+                    <span class="text-gray-800 text-sm truncate">{{ $staff->full_name }}</span>
+                    <span class="text-gray-500 text-xs">({{ $staff->type }})</span>
+                    @if($programStaff->contains('staff_id', $staff->id))
+                    <span class="text-green-600 text-xs">(مضاف)</span>
+                    @endif
+                </label>
+                @endforeach
             </div>
-            <div>
-                <h3 class="mb-2 font-medium text-gray-700">الأساتذة</h3>
-                <ul class="pr-5 list-disc">
-                    @forelse($teachers as $staff)
-                    <li>{{ $staff->full_name }}</li>
-                    @empty
-                    <li class="text-gray-400">لا يوجد أساتذة</li>
-                    @endforelse
-                </ul>
+            <button type="submit" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 mt-2 px-4 py-2 rounded-lg font-semibold text-white text-sm transition">
+                <i class="fas fa-user-plus"></i> إضافة فريق عمل
+            </button>
+            <div class="mt-4 text-gray-700 text-sm">
+                <strong>إجمالي الفريق:</strong> {{ $programStaff->count() }}
             </div>
-            <div>
-                <h3 class="mb-2 font-medium text-gray-700">الإداريون</h3>
-                <ul class="pr-5 list-disc">
-                    @forelse($admins as $staff)
-                    <li>{{ $staff->full_name }}</li>
-                    @empty
-                    <li class="text-gray-400">لا يوجد إداريون</li>
-                    @endforelse
-                </ul>
+        </form>
+
+        <!-- Staff Search and Filter Controls -->
+        <div class="flex sm:flex-row flex-col gap-2 mt-6 mb-3">
+            <div class="flex-1">
+                <input type="text" id="staff-search-input" class="px-2 py-1 border rounded w-full text-xs" placeholder="بحث بالاسم...">
+            </div>
+            <div class="w-40">
+                <select id="staff-type-filter" class="px-2 py-1 border rounded w-full text-xs">
+                    <option value="">الكل</option>
+                    <option value="إداري">إداري</option>
+                    <option value="مؤطر دراسي">مؤطر دراسي</option>
+                    <option value="خدمات">خدمات</option>
+                </select>
             </div>
         </div>
-        <div class="mt-4 text-gray-700">
-            <strong>إجمالي الفريق:</strong> {{ $staffCount }}
+
+        <div class="overflow-x-auto">
+            <table class="bg-white border border-gray-200 rounded-lg min-w-full text-sm text-right" id="staff-table">
+                <thead>
+                    <tr>
+                        <th class="px-3 py-2 border-b cursor-pointer" data-sort="index">
+                            <i class="ml-1 text-gray-400 text-xs fas fa-sort"></i> #
+                        </th>
+                        <th class="px-3 py-2 border-b cursor-pointer" data-sort="name">
+                            <i class="ml-1 text-gray-400 text-xs fas fa-sort"></i> الاسم
+                        </th>
+                        <th class="px-3 py-2 border-b cursor-pointer" data-sort="type">
+                            <i class="ml-1 text-gray-400 text-xs fas fa-sort"></i> النوع
+                        </th>
+                        <th class="px-3 py-2 border-b">تغيير النوع</th>
+                        <th class="px-3 py-2 border-b">إزالة</th>
+                    </tr>
+                </thead>
+                <tbody id="staff-table-body">
+                    @forelse($programStaff as $i => $ps)
+                    <tr data-name="{{ $ps->staff->full_name ?? '' }}"
+                        data-type="{{ $ps->staff->type ?? '' }}">
+                        <td class="px-3 py-2 border-b">{{ $i+1 }}</td>
+                        <td class="px-3 py-2 border-b font-medium text-gray-800">{{ $ps->staff->full_name ?? '-' }}</td>
+                        <td class="px-3 py-2 border-b text-gray-600">{{ $ps->staff->type ?? '-' }}</td>
+                        <td class="px-3 py-2 border-b">
+                            <form method="POST" action="{{ route('admin.staffs.updateType', $ps->staff_id) }}" class="inline">
+                                @csrf
+                                @method('PUT')
+                                <select name="type" class="px-1 py-0.5 border rounded text-xs">
+                                    <option value="إداري" @selected($ps->staff->type == 'إداري')>إداري</option>
+                                    <option value="مؤطر دراسي" @selected($ps->staff->type == 'مؤطر دراسي')>مؤطر دراسي</option>  
+                                    <option value="خدمات" @selected($ps->staff->type == 'خدمات')>خدمات</option>
+                                </select>
+                                <button type="submit" class="px-2 py-1 rounded text-blue-600 hover:text-blue-800 text-xs transition" title="تغيير النوع">
+                                    <i class="fas fa-sync"></i>
+                                </button>
+                            </form>
+                        </td>
+                        <td class="px-3 py-2 border-b">
+                            <form method="POST" action="{{ route('admin.programs.removeStaff', [$program->id, $ps->staff_id]) }}" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="bg-red-50 hover:bg-red-100 px-2 py-1 rounded text-red-600 hover:text-red-800 text-xs transition" title="إزالة">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="py-4 text-gray-400 text-center">لا يوجد فريق عمل مضاف بعد</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
+
     </div>
 
-    <div class="flex justify-end mt-8">
-        <form method="GET" action="{{ route('admin.programs.index') }}">
+    <!-- Add Students Section -->
+    <div class="bg-white shadow mb-6 p-4 rounded-lg">
+        <h2 class="mb-2 font-semibold text-primary text-lg">إضافة طلاب للبرنامج</h2>
+        <form method="POST" action="{{ route('admin.programs.addStudents', $program->id) }}" class="flex flex-col gap-2">
+            @csrf
+            <div class="gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-h-56 overflow-y-auto">
+                @foreach(\App\Models\Student::where('academic_year_id', $program->academic_year_id)->get() as $student)
+                <label class="flex items-center gap-2 bg-gray-50 hover:bg-primary/10 px-3 py-2 border border-gray-200 hover:border-primary/30 rounded-lg transition-colors duration-200 cursor-pointer">
+                    <input type="checkbox" name="student_ids[]" value="{{ $student->id }}"
+                        @if($invitations->contains('student_id', $student->id)) checked disabled @endif
+                    class="border-gray-300 rounded focus:ring-primary/50 w-5 h-5 text-primary transition-colors duration-200">
+                    <span class="text-gray-800 text-sm truncate">{{ $student->full_name }}</span>
+                    @if($invitations->contains('student_id', $student->id))
+                    <span class="text-green-600 text-xs">(مضاف)</span>
+                    @endif
+                </label>
+                @endforeach
+            </div>
+            <button type="submit" class="bg-green-600 hover:bg-green-700 mt-2 px-4 py-2 rounded-lg font-semibold text-white text-sm transition">إضافة طلاب</button>
+        </form>
+    </div>
+
+    <div class="flex justify-end items-center gap-4 mt-6">
+        <form method="POST" action="{{ route('admin.programs.destroy', $program->id) }}" onsubmit="return confirm('هل أنت متأكد من حذف البرنامج؟');" class="inline">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-semibold text-white text-sm transition">
+                <i class="fas fa-trash"></i> حذف البرنامج
+            </button>
+        </form>
+        <form method="GET" action="{{ route('admin.programs.index') }}" class="inline">
             <button type="submit" class="bg-gray-500 hover:bg-gray-700 px-6 py-2 rounded-lg font-semibold text-white">
                 العودة إلى قائمة البرامج
             </button>
@@ -361,6 +468,69 @@ $staffCount = $supervisors->count() + $teachers->count() + $admins->count();
 
             // Initial render
             renderTablePage(1, allRows);
+        });
+
+        // --- Staff Table Filtering, Sorting, and Searching ---
+        document.addEventListener('DOMContentLoaded', function() {
+            let staffSortDirection = {};
+            const staffTable = document.getElementById('staff-table');
+            const staffTbody = document.getElementById('staff-table-body');
+            let allStaffRows = Array.from(staffTbody.querySelectorAll('tr'));
+
+            function renderStaffTable(filteredRows = null) {
+                let rows = filteredRows || allStaffRows;
+                staffTbody.innerHTML = '';
+                rows.forEach(tr => staffTbody.appendChild(tr));
+            }
+
+            function getFilteredStaffRows() {
+                const search = document.getElementById('staff-search-input').value.trim().toLowerCase();
+                const type = document.getElementById('staff-type-filter').value;
+                return allStaffRows.filter(tr => {
+                    const name = (tr.dataset.name || '').toLowerCase();
+                    const staffType = (tr.dataset.type || '');
+                    const nameMatch = !search || name.includes(search);
+                    const typeMatch = !type || staffType === type;
+                    return nameMatch && typeMatch;
+                });
+            }
+
+            // Sorting
+            staffTable.querySelectorAll('th[data-sort]').forEach(function(th) {
+                th.addEventListener('click', function() {
+                    const key = th.getAttribute('data-sort');
+                    staffSortDirection[key] = !staffSortDirection[key];
+                    let rows = getFilteredStaffRows();
+                    rows.sort((a, b) => {
+                        let aVal, bVal;
+                        if (key === 'index') {
+                            aVal = parseInt(a.children[0].textContent.trim());
+                            bVal = parseInt(b.children[0].textContent.trim());
+                        } else {
+                            aVal = (a.dataset[key] || '').toLowerCase();
+                            bVal = (b.dataset[key] || '').toLowerCase();
+                        }
+                        if (aVal < bVal) return staffSortDirection[key] ? -1 : 1;
+                        if (aVal > bVal) return staffSortDirection[key] ? 1 : -1;
+                        return 0;
+                    });
+                    allStaffRows = rows;
+                    renderStaffTable(allStaffRows);
+                });
+            });
+
+            // Search by name
+            document.getElementById('staff-search-input').addEventListener('input', function() {
+                renderStaffTable(getFilteredStaffRows());
+            });
+
+            // Filter by type
+            document.getElementById('staff-type-filter').addEventListener('change', function() {
+                renderStaffTable(getFilteredStaffRows());
+            });
+
+            // Initial render
+            renderStaffTable(allStaffRows);
         });
     </script>
     @endsection

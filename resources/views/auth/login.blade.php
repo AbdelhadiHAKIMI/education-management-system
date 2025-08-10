@@ -35,7 +35,7 @@
             
             <!-- Error Messages -->
             @if($errors->any())
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700" role="alert">
                     <ul>
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -69,10 +69,6 @@
             </div>
             
             <div class="flex justify-between items-center">
-                <div class="flex items-center">
-                    <input id="remember" name="remember" type="checkbox" class="border-gray-300 rounded focus:ring-blue-500 w-4 h-4 text-blue-600">
-                    <label for="remember" class="block mr-2 text-gray-700 text-sm">تذكرني</label>
-                </div>
                 @if (Route::has('password.request'))
                     <a href="{{ route('password.request') }}" class="text-blue-600 text-sm hover:underline">نسيت كلمة المرور؟</a>
                 @endif

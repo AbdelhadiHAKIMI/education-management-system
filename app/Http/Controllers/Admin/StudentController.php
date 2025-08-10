@@ -24,6 +24,8 @@ class StudentController extends Controller
         }
 
         $branchId = $request->input('branch_id');
+        $search = $request->input('search');
+
         $studentsQuery = $activeAcademicYear
             ? \App\Models\Student::with(['branch', 'level'])
             ->where('academic_year_id', $activeAcademicYear->id)
@@ -33,7 +35,11 @@ class StudentController extends Controller
             $studentsQuery->where('branch_id', $branchId);
         }
 
-        $students = $studentsQuery->paginate(10);
+        if ($search) {
+            $studentsQuery->where('full_name', 'like', '%' . $search . '%');
+        }
+
+        $students = $studentsQuery->paginate(10)->appends($request->except('page'));
         $branches = \App\Models\Branch::all();
 
         return view('admin.students.index', compact('students', 'branches', 'branchId'));
