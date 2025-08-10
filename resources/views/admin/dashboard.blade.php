@@ -30,10 +30,6 @@
                 <p class="text-gray-500">مرحباً بعودتك، {{ Auth::user()->name ?? 'اسم المستخدم' }}</p>
             </div>
             <div class="flex gap-2">
-                <a href="#" class="flex items-center gap-2 bg-white hover:bg-gray-100 shadow-sm px-4 py-2 border border-gray-300 rounded-lg text-gray-700 transition">
-                    <i class="fas fa-file-export"></i>
-                    <span>تصدير البيانات</span>
-                </a>
                 <a href="{{ route('admin.programs.create') }}" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shadow px-4 py-2 rounded-lg text-white transition">
                     <i class="fas fa-plus"></i>
                     <span>برنامج جديد</span>
@@ -70,7 +66,7 @@
                         <i class="text-blue-600 fas fa-users fa-lg"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm">الطلاب المسجلين</p>
+                        <p class="text-gray-500 text-sm">الطلبة المسجلين</p>
                         <h3 class="font-bold text-2xl">{{ $studentsCount }}</h3>
                     </div>
                 </div>
@@ -143,13 +139,13 @@
             <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
                 @forelse($programs as $program)
                 <div class="bg-white shadow rounded-lg p-5 flex flex-col gap-2 border-r-4 {{ $program->is_active ? 'border-green-500' : 'border-gray-300' }}">
-                    <div class="flex justify-between items-center mb-2">
+                    <div class="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-2 mb-2">
                         <h3 class="font-semibold text-dark text-xl">{{ $program->name ?? 'اسم البرنامج غير متوفر' }}</h3>
                         <span class="px-3 py-1 rounded-full text-xs {{ $program->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
                             {{ $program->is_active ? 'نشط' : 'منتهي' }}
                         </span>
                     </div>
-                    <div class="flex flex-wrap gap-4 text-gray-500 text-sm">
+                    <div class="flex sm:flex-row flex-col flex-wrap gap-2 text-gray-500 text-sm">
                         <div>
                             <i class="mr-1 fas fa-calendar-alt"></i>
                             {{ \Carbon\Carbon::parse($program->start_date)->format('d/m/Y') }}
@@ -165,7 +161,7 @@
                             {{ is_numeric($program->registration_fees) ? number_format($program->registration_fees, 2, '.', '') : 'غير متوفر' }} د.ج
                         </div>
                     </div>
-                    <div class="flex gap-2 mt-3">
+                    <div class="flex sm:flex-row flex-col gap-2 mt-3">
                         <a href="{{ route('admin.programs.show', ['program' => $program->id]) }}" class="flex-1 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded text-blue-600 text-sm text-center transition">
                             <i class="mr-1 fas fa-eye"></i> عرض
                         </a>
@@ -184,7 +180,7 @@
         <div>
             <h2 class="mb-4 font-semibold text-gray-700 text-lg">أحدث الأنشطة</h2>
             <div class="space-y-5 bg-white shadow p-6 rounded-lg">
-                <div class="flex items-start gap-3">
+                <div class="flex sm:flex-row flex-col items-start gap-3">
                     <div class="bg-blue-100 p-2 rounded-full">
                         <i class="text-blue-600 fas fa-user-plus"></i>
                     </div>
@@ -194,7 +190,7 @@
                         <p class="text-gray-400 text-xs">منذ ساعتين</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-3">
+                <div class="flex sm:flex-row flex-col items-start gap-3">
                     <div class="bg-green-100 p-2 rounded-full">
                         <i class="text-green-600 fas fa-money-bill-wave"></i>
                     </div>
@@ -204,7 +200,7 @@
                         <p class="text-gray-400 text-xs">منذ 5 ساعات</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-3">
+                <div class="flex sm:flex-row flex-col items-start gap-3">
                     <div class="bg-purple-100 p-2 rounded-full">
                         <i class="text-purple-600 fas fa-user-check"></i>
                     </div>

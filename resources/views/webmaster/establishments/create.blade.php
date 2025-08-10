@@ -138,7 +138,8 @@
                                 <input type="password" name="admin_password" id="admin_password" class="px-4 py-2 border border-gray-300 focus:border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 w-full" placeholder="كلمة مرور المدير" required>
                             </div>
 
-                            <!-- Education Stages & Levels Selection -->
+                            {{-- Remove Education Stages & Levels Selection --}}
+                            {{--
                             <div class="md:col-span-2">
                                 <h3 class="mb-4 pb-2 border-gray-200 border-b font-semibold text-gray-800 text-lg">المراحل التعليمية والمستويات</h3>
                                 <div id="education-stages-section">
@@ -148,6 +149,7 @@
                                     <!-- Levels checkboxes will be rendered here -->
                                 </div>
                             </div>
+                            --}}
 
                             <div class="flex justify-end space-x-3 space-x-reverse md:col-span-2 mt-8 pt-6 border-gray-200 border-t">
                                 <button type="reset" class="bg-gray-200 hover:bg-gray-300 px-6 py-2 rounded-lg text-gray-800">

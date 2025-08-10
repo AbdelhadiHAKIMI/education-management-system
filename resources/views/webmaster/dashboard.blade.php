@@ -102,7 +102,7 @@
                     </form>
                 </div>
             </div>
-        </aside> 
+        </aside>
 
         <!-- Content Area -->
         <main class="flex-1 p-8">
@@ -159,58 +159,58 @@
             <!-- Establishments Table -->
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="w-full min-w-[600px]">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">#</th>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">المؤسسة</th>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">المدير</th>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">الطلاب</th>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">الحالة</th>
-                                <th class="px-4 py-3 font-semibold text-gray-700 text-right">الإجراءات</th>
+                                <th class="px-2 sm:px-4 py-3 font-semibold text-gray-700 text-right">#</th>
+                                <th class="px-2 sm:px-4 py-3 font-semibold text-gray-700 text-right">المؤسسة</th>
+                                <th class="px-2 sm:px-4 py-3 font-semibold text-gray-700 text-right">المدير</th>
+                                <th class="px-2 sm:px-4 py-3 font-semibold text-gray-700 text-right">الطلاب</th>
+                                <th class="px-2 sm:px-4 py-3 font-semibold text-gray-700 text-right">الحالة</th>
+                                <th class="px-2 sm:px-4 py-3 font-semibold text-gray-700 text-right">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             @forelse($establishments as $index => $establishment)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3">{{ $establishments->firstItem() + $index }}</td>
-                                <td class="px-4 py-3 font-medium">
-                                    <div class="flex items-center space-x-3 space-x-reverse">
-                                        <div class="bg-blue-100 p-2 rounded-full">
+                                <td class="px-2 sm:px-4 py-3">{{ $establishments->firstItem() + $index }}</td>
+                                <td class="px-2 sm:px-4 py-3 font-medium">
+                                    <div class="flex sm:flex-row flex-col sm:items-center space-x-0 space-x-reverse sm:space-x-3">
+                                        <div class="flex-shrink-0 bg-blue-100 mb-2 sm:mb-0 p-2 rounded-full">
                                             <i class="text-blue-600 fas fa-school"></i>
                                         </div>
                                         <div>
-                                            <p class="font-semibold">{{ $establishment->name }}</p>
-                                            <p class="text-gray-500 text-sm">{{ $establishment->wilaya }}</p>
+                                            <p class="font-semibold break-words">{{ $establishment->name }}</p>
+                                            <p class="text-gray-500 text-xs sm:text-sm">{{ $establishment->wilaya }}</p>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-4 py-3">
+                                <td class="px-2 sm:px-4 py-3 break-words">
                                     {{ $establishment->manager ? $establishment->manager->name : '-' }}
                                 </td>
-                                <td class="px-4 py-3">
+                                <td class="px-2 sm:px-4 py-3">
                                     <!-- If you want to ignore student number, just show '-' or leave blank -->
                                     -
                                 </td>
-                                <td class="px-4 py-3">
+                                <td class="px-2 sm:px-4 py-3">
                                     @if($establishment->is_active)
-                                    <span class="bg-green-100 px-3 py-1 rounded-full text-green-800 text-sm">نشطة</span>
+                                    <span class="bg-green-100 px-2 sm:px-3 py-1 rounded-full text-green-800 text-xs sm:text-sm">نشطة</span>
                                     @else
-                                    <span class="bg-red-100 px-3 py-1 rounded-full text-red-800 text-sm">معلقة</span>
+                                    <span class="bg-red-100 px-2 sm:px-3 py-1 rounded-full text-red-800 text-xs sm:text-sm">معلقة</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex space-x-2 space-x-reverse">
-                                        <a href="{{ route('webmaster.establishments.show', $establishment->id) }}" class="hover:bg-blue-50 p-2 rounded-full text-blue-600 hover:text-blue-800" title="عرض">
+                                <td class="px-2 sm:px-4 py-3">
+                                    <div class="flex sm:flex-row flex-col gap-2 sm:space-x-2 sm:space-x-reverse">
+                                        <a href="{{ route('webmaster.establishments.show', $establishment->id) }}" class="hover:bg-blue-50 p-2 rounded-full text-blue-600 hover:text-blue-800 text-center" title="عرض">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('webmaster.establishments.edit', $establishment->id) }}" class="hover:bg-yellow-50 p-2 rounded-full text-yellow-600 hover:text-yellow-800" title="تعديل">
+                                        <a href="{{ route('webmaster.establishments.edit', $establishment->id) }}" class="hover:bg-yellow-50 p-2 rounded-full text-yellow-600 hover:text-yellow-800 text-center" title="تعديل">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <form action="{{ route('webmaster.establishments.destroy', $establishment->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف المؤسسة؟');" style="display:inline;">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="hover:bg-red-50 p-2 rounded-full text-red-600 hover:text-red-800" title="حذف">
+                                            <button type="submit" class="hover:bg-red-50 p-2 rounded-full text-red-600 hover:text-red-800 text-center" title="حذف">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -225,9 +225,8 @@
                         </tbody>
                     </table>
                 </div>
-
                 <!-- Pagination -->
-                <div class="flex justify-between items-center px-4 py-3 border-gray-200 border-t">
+                <div class="flex sm:flex-row flex-col justify-between items-center px-2 sm:px-4 py-3 border-gray-200 border-t">
                     {{ $establishments->links() }}
                 </div>
             </div>

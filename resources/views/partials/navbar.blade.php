@@ -137,7 +137,7 @@ $currentExamSession = $activeAcademicYear ? \App\Models\ExamSession::where('acad
                     class="rounded-full w-8 h-8"
                     alt="صورة المستخدم">
                 <span>{{ $userName }}</span>
-                <i class="text-xs fas fa-chevron-down"></i>
+                
             </div>
         </div>
     </div>
@@ -190,6 +190,42 @@ $currentExamSession = $activeAcademicYear ? \App\Models\ExamSession::where('acad
                     </div>
                 </div>
             </div>
+            <!-- Exam Session Selector (Mobile) -->
+            <div class="group relative">
+                <button class="flex items-center gap-x-2 bg-indigo-500 hover:bg-indigo-600 shadow-sm px-4 py-2.5 rounded-lg w-full">
+                    <i class="text-white text-sm fas fa-clock"></i>
+                    <span class="font-medium text-white text-sm">
+                        {{ $currentExamSession ? $currentExamSession->name : 'لا توجد جلسة امتحان' }}
+                    </span>
+                    <i class="text-white text-xs group-hover:rotate-180 transition-transform duration-200 fas fa-chevron-down"></i>
+                </button>
+                <div class="hidden group-focus-within:block group-hover:block right-0 left-0 z-20 absolute bg-white shadow-lg mt-1.5 border border-gray-200 rounded-lg w-full overflow-hidden">
+                    <div class="divide-y divide-gray-100">
+                        <div class="bg-indigo-50 px-4 py-3">
+                            <h3 class="font-semibold text-indigo-800 text-sm">جلسات الامتحان</h3>
+                        </div>
+                        <div class="max-h-[280px] overflow-y-auto">
+                            @foreach($examSessions as $session)
+                            <form action="{{ route('exam_sessions.activate', $session->id) }}" method="POST" class="group flex justify-between items-center hover:bg-gray-50 px-4 py-3 transition-colors duration-150">
+                                @csrf
+                                <span class="font-medium text-gray-800 text-sm">{{ $session->name }}</span>
+                                @if($session->is_current)
+                                <span class="inline-flex items-center gap-x-1 bg-green-50 px-2.5 py-1 rounded-full font-medium text-green-700 text-xs">
+                                    <i class="text-[10px] text-green-500 fas fa-check-circle"></i>
+                                    نشطة
+                                </span>
+                                @else
+                                <button type="submit" class="inline-flex items-center gap-x-1 bg-gray-100 hover:bg-indigo-100 px-2.5 py-1 rounded-full font-medium text-gray-600 hover:text-indigo-700 text-xs">
+                                    <i class="text-[10px] text-gray-400 fas fa-times-circle"></i>
+                                    تفعيل
+                                </button>
+                                @endif
+                            </form>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Notifications (mobile) -->
             <a href="#" class="flex items-center gap-x-2 hover:bg-blue-600 px-4 py-3 rounded-lg">
                 <i class="fas fa-bell"></i>
@@ -202,7 +238,7 @@ $currentExamSession = $activeAcademicYear ? \App\Models\ExamSession::where('acad
                     class="rounded-full w-8 h-8"
                     alt="صورة المستخدم">
                 <span>{{ $userName ?? 'مستخدم' }}</span>
-                <i class="ml-auto text-xs fas fa-chevron-down"></i>
+                
             </div>
         </div>
     </div>

@@ -40,7 +40,11 @@
                 </div>
                 <div class="flex flex-col flex-1 items-center">
                     <span class="mb-1 text-gray-500 text-xs">الأساتذة</span>
-                    <span class="font-bold text-blue-700 text-lg">3</span>
+                    <span class="font-bold text-blue-700 text-lg">
+                        {{
+                            \App\Models\ProgramStaff::where('program_id', $program->id)->count()
+                        }}
+                    </span>
                 </div>
                 <div class="flex flex-col flex-1 items-center">
                     <span class="mb-1 text-gray-500 text-xs">المبلغ</span>

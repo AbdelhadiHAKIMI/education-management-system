@@ -111,37 +111,40 @@ $staffCount = $supervisors->count() + $teachers->count() + $admins->count();
     <!-- Staff List -->
     <div class="bg-white shadow mb-6 p-4 rounded-lg">
         <h2 class="mb-2 font-semibold text-primary text-lg">الفريق العامل</h2>
-        <div class="gap-4 grid grid-cols-1 md:grid-cols-3">
-            <div>
-                <h3 class="mb-2 font-medium text-gray-700">المشرفون</h3>
-                <ul class="pr-5 list-disc">
-                    @forelse($supervisors as $staff)
-                    <li>{{ $staff->full_name }}</li>
+        <div class="overflow-x-auto">
+            <table class="bg-white border border-gray-200 rounded-lg min-w-full text-sm text-right" id="staff-table">
+                <thead>
+                    <tr>
+                        <th class="px-3 py-2 border-b">#</th>
+                        <th class="px-3 py-2 border-b">الاسم</th>
+                        <th class="px-3 py-2 border-b">النوع</th>
+                        <th class="px-3 py-2 border-b">الهاتف</th>
+                        <th class="px-3 py-2 border-b">الشعبة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                    $allStaff = collect();
+                    if(isset($supervisors)) $allStaff = $allStaff->concat($supervisors);
+                    if(isset($teachers)) $allStaff = $allStaff->concat($teachers);
+                    if(isset($admins)) $allStaff = $allStaff->concat($admins);
+                    $allStaff = $allStaff->unique('id')->values();
+                    @endphp
+                    @forelse($allStaff as $i => $staff)
+                    <tr>
+                        <td class="px-3 py-2 border-b">{{ $i+1 }}</td>
+                        <td class="px-3 py-2 border-b font-medium text-gray-800">{{ $staff->full_name ?? '-' }}</td>
+                        <td class="px-3 py-2 border-b text-gray-600">{{ $staff->type ?? '-' }}</td>
+                        <td class="px-3 py-2 border-b text-gray-600">{{ $staff->phone ?? '-' }}</td>
+                        <td class="px-3 py-2 border-b text-gray-600">{{ $staff->branch?->name ?? '-' }}</td>
+                    </tr>
                     @empty
-                    <li class="text-gray-400">لا يوجد مشرفون</li>
+                    <tr>
+                        <td colspan="5" class="py-4 text-gray-400 text-center">لا يوجد فريق عمل مضاف بعد</td>
+                    </tr>
                     @endforelse
-                </ul>
-            </div>
-            <div>
-                <h3 class="mb-2 font-medium text-gray-700">الأساتذة</h3>
-                <ul class="pr-5 list-disc">
-                    @forelse($teachers as $staff)
-                    <li>{{ $staff->full_name }}</li>
-                    @empty
-                    <li class="text-gray-400">لا يوجد أساتذة</li>
-                    @endforelse
-                </ul>
-            </div>
-            <div>
-                <h3 class="mb-2 font-medium text-gray-700">الإداريون</h3>
-                <ul class="pr-5 list-disc">
-                    @forelse($admins as $staff)
-                    <li>{{ $staff->full_name }}</li>
-                    @empty
-                    <li class="text-gray-400">لا يوجد إداريون</li>
-                    @endforelse
-                </ul>
-            </div>
+                </tbody>
+            </table>
         </div>
         <div class="mt-4 text-gray-700">
             <strong>إجمالي الفريق:</strong> {{ $staffCount }}

@@ -61,7 +61,7 @@ if (!isset($step3)) $step3 = [];
                     </div>
                     <span class="mt-2 text-xs font-medium {{ $step == 1 ? 'text-primary' : 'text-gray-500' }}">
                         @if($step == 1) معلومات البرنامج
-                        @elseif($step == 2) الطلاب
+                        @elseif($step == 2) الطلبة
                         @elseif($step == 3) الفريق
                         @else إنهاء
                         @endif
@@ -271,14 +271,20 @@ if (!isset($step3)) $step3 = [];
         $academicYearsForEst = $academicYears->where('establishment_id', $userEstablishmentId);
         @endphp
         <form id="staff-filter-form" class="flex flex-wrap items-center gap-4 mb-4" onsubmit="return false;">
-            <label class="font-medium text-gray-700 text-sm">السنة الدراسية:</label>
-            <select name="staff_academic_year_id" id="staff_academic_year_id" class="px-3 py-2 border rounded">
-                @foreach($academicYearsForEst as $year)
-                <option value="{{ $year->id }}" {{ (isset($selectedStaffAcademicYearId) && $selectedStaffAcademicYearId == $year->id) ? 'selected' : '' }}>
-                    {{ $year->name }}
-                </option>
-                @endforeach
-            </select>
+            <div class="flex sm:flex-row flex-col items-center gap-2">
+                <label for="staff_academic_year_ids" class="mb-1 sm:mb-0 font-medium text-gray-700 text-sm">السنوات الدراسية:</label>
+                <div class="relative w-full sm:w-auto">
+                    <select name="staff_academic_year_id" id="staff_academic_year_id"
+                        class="px-3 py-2 border border-gray-300 focus:border-primary rounded-lg focus:ring-2 focus:ring-primary/50 w-full sm:w-56 transition-all duration-300">
+                        <option value="">اختر السنة الدراسية</option>
+                        @foreach($academicYearsForEst as $year)
+                        <option value="{{ $year->id }}" {{ (isset($selectedStaffAcademicYearId) && $selectedStaffAcademicYearId == $year->id) ? 'selected' : '' }}>
+                            {{ $year->name }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
             <label class="font-medium text-gray-700 text-sm">نوع المؤطر:</label>
             <select name="staff_type" id="staff_type" class="px-3 py-2 border rounded">
                 <option value="">الكل</option>
@@ -582,6 +588,7 @@ if (!isset($step3)) $step3 = [];
         document.getElementById('staff_type').addEventListener('change', refreshStaffStep);
     });
 
+    // --- Multi-year staff selection: persist checked staff across AJAX reloads ---
     let selectedStaff = {
         supervisor_ids: new Set(),
         teacher_ids: new Set(),
@@ -589,21 +596,7 @@ if (!isset($step3)) $step3 = [];
     };
 
     function syncStaffCheckboxes() {
-        // Save checked staff before re-render
-        document.querySelectorAll('#staff-step-content input[name="supervisor_ids[]"]').forEach(cb => {
-            if (cb.checked) selectedStaff.supervisor_ids.add(cb.value);
-            else selectedStaff.supervisor_ids.delete(cb.value);
-        });
-        document.querySelectorAll('#staff-step-content input[name="teacher_ids[]"]').forEach(cb => {
-            if (cb.checked) selectedStaff.teacher_ids.add(cb.value);
-            else selectedStaff.teacher_ids.delete(cb.value);
-        });
-        document.querySelectorAll('#staff-step-content input[name="admin_ids[]"]').forEach(cb => {
-            if (cb.checked) selectedStaff.admin_ids.add(cb.value);
-            else selectedStaff.admin_ids.delete(cb.value);
-        });
-
-        // After AJAX, restore checked state
+        // Restore checked state after AJAX
         setTimeout(() => {
             document.querySelectorAll('#staff-step-content input[name="supervisor_ids[]"]').forEach(cb => {
                 cb.checked = selectedStaff.supervisor_ids.has(cb.value);
@@ -629,15 +622,35 @@ if (!isset($step3)) $step3 = [];
         }, 0);
     }
 
+    function saveCheckedStaffBeforeAjax() {
+        // Save checked staff before AJAX reload
+        document.querySelectorAll('#staff-step-content input[name="supervisor_ids[]"]').forEach(cb => {
+            if (cb.checked) selectedStaff.supervisor_ids.add(cb.value);
+            else selectedStaff.supervisor_ids.delete(cb.value);
+        });
+        document.querySelectorAll('#staff-step-content input[name="teacher_ids[]"]').forEach(cb => {
+            if (cb.checked) selectedStaff.teacher_ids.add(cb.value);
+            else selectedStaff.teacher_ids.delete(cb.value);
+        });
+        document.querySelectorAll('#staff-step-content input[name="admin_ids[]"]').forEach(cb => {
+            if (cb.checked) selectedStaff.admin_ids.add(cb.value);
+            else selectedStaff.admin_ids.delete(cb.value);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         syncStaffCheckboxes();
 
         function refreshStaffStep() {
-            // Save checked staff before AJAX
-            syncStaffCheckboxes();
-            const yearId = document.getElementById('staff_academic_year_id').value;
+            saveCheckedStaffBeforeAjax();
+            // Get all selected academic year ids
+            const yearSelect = document.getElementById('staff_academic_year_ids');
             const staffType = document.getElementById('staff_type').value;
-            fetch("{{ route('admin.programs.create') }}?step=3&staff_academic_year_id=" + yearId + "&staff_type=" + encodeURIComponent(staffType), {
+            let selectedYears = [];
+            for (let option of yearSelect.options) {
+                if (option.selected) selectedYears.push(option.value);
+            }
+            fetch("{{ route('admin.programs.create') }}?step=3&staff_academic_year_ids[]=" + selectedYears.join('&staff_academic_year_ids[]=') + "&staff_type=" + encodeURIComponent(staffType), {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
@@ -645,12 +658,11 @@ if (!isset($step3)) $step3 = [];
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById('staff-step-content').innerHTML = html;
-                    // Restore checked state after AJAX
                     syncStaffCheckboxes();
                 });
         }
 
-        document.getElementById('staff_academic_year_id').addEventListener('change', refreshStaffStep);
+        document.getElementById('staff_academic_year_ids').addEventListener('change', refreshStaffStep);
         document.getElementById('staff_type').addEventListener('change', refreshStaffStep);
     });
 </script>
